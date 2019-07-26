@@ -1,5 +1,23 @@
 library(gdata)
 
+mapk_ode_equilM <- function(states, rates) {
+  transition_f <- function() {
+    w3 <- raf_activate/raf_deactivate
+    w2 <- mek_activate/mek_deactivate
+    w1 <- erk_activate/erk_deactivate
+    u3 <- w3 * E1
+    u2 <- (w2*k3)
+    u1 <- w1*k2
+    k3 <- (PRaf * u3)/(1+u3)
+    k2 <- (PPMek * (u2^2))/(1 + u2 + (u2^2))
+    k1 <- PPErk * ((u1)^2)/(1 + u1 + (u1)^2)
+    
+    list(k3,k2,k1)
+    print(list(k3,k2,k1))
+  }
+  return(transition_f)
+}
+
 mapk_ode_simplified <- function(states, rates) {
   
   transition_function <- function(t, interventions=NULL) {
