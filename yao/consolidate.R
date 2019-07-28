@@ -1,28 +1,49 @@
 library(gdata)
 
+# need to modify for interventions: in case of intervention, do not calculate the equilibrium value? 
 mapk_ode_equilM <- function(states, rates) {
-  transition_f <- function() {
+  innerState <- states
+  innerRate <- rates
+  transition_f <- function(states = innerState, rates = innerRate) {
+
+    with(as.list(c(states, rates)), {
     w3 <- raf_activate/raf_deactivate
     w2 <- mek_activate/mek_deactivate
     w1 <- erk_activate/erk_deactivate
+    
     t3 <- Raf + PRaf
     t2 <- Mek + PMek + PPMek
     t1 <- Erk + PErk + PPErk
     
+    
     u3 <- w3 * E1
     k3 <- t3 * (u3/(1+u3))
+
+    print('u3 and k3')
+    print(u3)
+    print(k3)
+    
     
     u2 <- w2 * k3
-    k2 <- t2 * ((u2^2)/(1 + u2 + u2^2))
+    # k2 <- t2 * ((u2^2)/(1 + u2 + u2^2))
+    k2 <- 20
+    print('u2 and k2')
+    print(u2)
+    print(k2)
     
     u1 <- w1 * k2
     k1 <- t3 * ((u1^2)/(1 + u1 + u1^2))
+    print('u1 and k1')
+    print(u1)
+    print(k1)
     
     list(k3,k2,k1)
-    print(list(k3,k2,k1))
+    })
   }
   return(transition_f)
+  
 }
+mapk_ode_equilM(initial_states, rates)()
 
 
 mapk_ode_simplified <- function(states, rates) {
@@ -78,11 +99,11 @@ rates <- list(
 
 initial_states <-  list(
   E1 = 1,
-  Raf = 80,
-  PRaf = 20,
-  Mek = 100,
+  Raf = 100,
+  PRaf = 0,
+  Mek = 80,
   PMek = 0,
-  PPMek = 0,
+  PPMek = 20,
   Erk = 100,
   PErk = 0,
   PPErk = 0

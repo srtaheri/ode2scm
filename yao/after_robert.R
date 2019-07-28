@@ -112,11 +112,11 @@ rates <- list(
 initial_states <-  list(
   E1 = 1,
   PRaf = 0,
-  PPMek = 0,
+  PPMek = 20,
   PPErk = 0
 )
 
-times <- seq(0, 1, by = .1)
+times <- seq(0, 120, by = .1)
 
 # mapk_ode_instance <- mapk_ode(initial_states, rates)
 # mapk_ode_intervention <- do(mapk_ode_instance, list(PPMek = k))
@@ -147,7 +147,10 @@ intervened()
 testOutIntervention <- ode_sim(intervened, initial_states, times)
 
 print("With Intervention working")
-intervented2 <- mapk_ode_robert(initial_states, rates, list(PPMek=10))
+intervented2 <- mapk_ode_robert(initial_states, rates, list(PPMek=20)) # have to change initial_states
 intervented2()
 testOutIntervention2 <- ode_sim(intervented2, initial_states, times)
 
+PRafM_intervened <- testOutIntervention2[nrow(testOutIntervention2),]$PRaf
+PPMekM_intervened <- testOutIntervention2[nrow(testOutIntervention2),]$PPMek
+PPErkM_intervened <- testOutIntervention2[nrow(testOutIntervention2),]$PPErk
