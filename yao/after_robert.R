@@ -46,29 +46,32 @@ mapk_ode_robert <- function(states, rates, interventions=NULL) {
       states[[int]] <- interventions[[int]]
     }
     
-      dE1 <- 0
-      if(!is.null(interventions$PRaf)) {
-        dPErk <- 0
-      } else{
-        dPRaf <- rates$raf_activate * (100-states$PRaf) * states$E1 - rates$raf_deactivate * states$PRaf
-      }
-      if(!is.null(interventions$PPMek)){
-        dPPMek <- 0
-      } else{
-        dPPMek <- (rates$mek_activate ^ 2) * (states$PRaf ^ 2) * (100 - PPMek) /
-          rates$mek_deactivate - rates$mek_activate * states$PRaf * states$PPMek - rates$mek_deactivate * states$PPMek
-      }
-      if(!is.null(interventions$PPErk)){
-        dPPErk <- 0
-      }else{
-        dPPErk <- (rates$erk_activate ^ 2) * (states$PPMek ^ 2) * (100 - PPErk) /
-          rates$erk_deactivate - rates$erk_activate * states$PPMek * states$PPErk - rates$erk_deactivate * states$PPErk
-      }
-      
-      list(dE1, dPRaf, dPPMek, dPPErk)
+    states <- as.list(states)
+    rates <- as.list(rates)
+    
+    dE1 <- 0
+    if(!is.null(interventions$PRaf)) {
+      dPErk <- 0
+    } else{
+      dPRaf <- rates$raf_activate * (100-states$PRaf) * states$E1 - rates$raf_deactivate * states$PRaf
+    }
+    if(!is.null(interventions$PPMek)){
+      dPPMek <- 0
+    } else{
+      dPPMek <- (rates$mek_activate ^ 2) * (states$PRaf ^ 2) * (100 - states$PPMek) /
+        rates$mek_deactivate - rates$mek_activate * states$PRaf * states$PPMek - rates$mek_deactivate * states$PPMek
+    }
+    if(!is.null(interventions$PPErk)){
+      dPPErk <- 0
+    }else{
+      dPPErk <- (rates$erk_activate ^ 2) * (states$PPMek ^ 2) * (100 - states$PPErk) /
+        rates$erk_deactivate - rates$erk_activate * states$PPMek * states$PPErk - rates$erk_deactivate * states$PPErk
+    }
+    
+    list(c(dE1, dPRaf, dPPMek, dPPErk))
   }
-  attr(transition_function, 'rates') <- innerRates
-  attr(transition_function, 'states') <- innerStates
+  attr(transition_function, 'rates') <- as.list(innerRates)
+  attr(transition_function, 'states') <- as.list(innerStates)
   return(transition_function)
 }
 
@@ -99,6 +102,10 @@ times <- seq(0, 120, by = .1)
 testModelInstance <- mapk_ode_robert(initial_states, rates)
 testOut <- ode_sim(testModelInstance, initial_states, times)
 
+# result
+PRafM <- testOut[nrow(testOut),]$PRaf
+PPMekM <- testOut[nrow(testOut),]$PPMek
+PPErkM <- testOut[nrow(testOut),]$PPErk
 
 # so I guess we don't need Raf, Mek, PMek, Erk and PErk values!
 initial_states <-  list(
