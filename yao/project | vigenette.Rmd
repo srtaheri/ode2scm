@@ -113,7 +113,7 @@ steady_states <- list(Raf=Raf, Mek=Mek, Erk=Erk)
 ```{r}
 
 ##
-(mapk_ode_simplified, initial_states, [PPMek = k]) 
+# (mapk_ode_simplified, initial_states, PPMek = k) 
 mapk_ode_simplified <- function(states, rates) {
   transition_function <- function(t, states, rates) {
     with(as.list(c(states, rates)), {

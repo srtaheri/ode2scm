@@ -2,8 +2,11 @@ library(gdata)
 library(ode2scm)
 ode_sim <- function(transition_function, initial_states, times){
   initial_states <- structure(as.numeric(initial_states), names = names(initial_states))
+  # print(initial_states)
+  # print(transition_function)
   rates <- attr(transition_function, 'rates')
   rates <- structure(as.numeric(rates), names = names(rates))
+  # print(rates)
   as_tibble(
     as.data.frame(
       deSolve::ode(
@@ -36,12 +39,14 @@ if(!is.null(interventions)) {
 }
 
 
-
 mapk_ode_robert <- function(states, rates, interventions=NULL) {
   innerRates <- rates
   innerStates <- states
-  transition_function <- function(t, states = innerStates, rates = innerRates,
-                                  interventions = NULL) {
+  innerinterventions <- interventions #(without mapkDo)
+  transition_function <- function(t, 
+                                  states = innerStates, 
+                                  rates = innerRates,
+                                  interventions = innerinterventions) {
     for(int in names(interventions)){
       states[[int]] <- interventions[[int]]
     }
@@ -49,33 +54,50 @@ mapk_ode_robert <- function(states, rates, interventions=NULL) {
     states <- as.list(states)
     rates <- as.list(rates)
     
+    # print('check variables')
+    # print('PRaf')
+    # print(states$PRaf)
+    # print('PPMek')
+    # print(states$PPMek)
+    # print('PPErk')
+    # print(states$PPErk)
+  
+    
     dE1 <- 0
     if(!is.null(interventions$PRaf)) {
       dPErk <- 0
     } else{
-      dPRaf <- rates$raf_activate * (100-states$PRaf) * states$E1 - rates$raf_deactivate * states$PRaf
+      dPRaf <- rates$raf_activate * (100-states$PRaf) * states$E1 - 
+        rates$raf_deactivate * states$PRaf
     }
     if(!is.null(interventions$PPMek)){
       dPPMek <- 0
     } else{
       dPPMek <- (rates$mek_activate ^ 2) * (states$PRaf ^ 2) * (100 - states$PPMek) /
-        rates$mek_deactivate - rates$mek_activate * states$PRaf * states$PPMek - rates$mek_deactivate * states$PPMek
+        rates$mek_deactivate - rates$mek_activate * states$PRaf * states$PPMek - 
+        rates$mek_deactivate * states$PPMek
     }
     if(!is.null(interventions$PPErk)){
       dPPErk <- 0
     }else{
       dPPErk <- (rates$erk_activate ^ 2) * (states$PPMek ^ 2) * (100 - states$PPErk) /
-        rates$erk_deactivate - rates$erk_activate * states$PPMek * states$PPErk - rates$erk_deactivate * states$PPErk
+        rates$erk_deactivate - rates$erk_activate * states$PPMek * states$PPErk - 
+        rates$erk_deactivate * states$PPErk
     }
+    
+    # print('dPRaf')
+    # print(dPRaf)
+    # print('dPPMek')
+    # print(dPPMek)
+    # print('dPPErk')
+    # print(dPPErk)
     
     list(c(dE1, dPRaf, dPPMek, dPPErk))
   }
-  attr(transition_function, 'rates') <- as.list(innerRates)
-  attr(transition_function, 'states') <- as.list(innerStates)
+  attr(transition_function, 'rates') <- as.list(rates)
+  attr(transition_function, 'states') <- as.list(states)
   return(transition_function)
 }
-
-
 
 rates <- list(
   raf_activate = 0.1,
@@ -86,47 +108,46 @@ rates <- list(
   erk_deactivate = 1.0
 )
 
+# so I guess we don't need Raf, Mek, PMek, Erk and PErk values!
 initial_states <-  list(
   E1 = 1,
-  PRaf = 20,
+  PRaf = 0,
   PPMek = 0,
   PPErk = 0
 )
 
-times <- seq(0, 120, by = .1)
+times <- seq(0, 1, by = .1)
 
 # mapk_ode_instance <- mapk_ode(initial_states, rates)
 # mapk_ode_intervention <- do(mapk_ode_instance, list(PPMek = k))
 # ode_out <- ode_sim(mapk_ode_intervention, initial_states, times)
 
-testModelInstance <- mapk_ode_robert(initial_states, rates)
-testOut <- ode_sim(testModelInstance, initial_states, times)
+## with intervention
+mapkDo <- function(model, doIntervention) {
+  return (function() {
+    model(interventions = doIntervention)
+  })
+  #return (intervened_model)
+}
+
+## without intervention
+print("Without Intervention")
+firstModel <- mapk_ode_robert(initial_states, rates)
+firstModel()
+testOut <- ode_sim(firstModel, initial_states, times)
 
 # result
 PRafM <- testOut[nrow(testOut),]$PRaf
 PPMekM <- testOut[nrow(testOut),]$PPMek
 PPErkM <- testOut[nrow(testOut),]$PPErk
 
-# so I guess we don't need Raf, Mek, PMek, Erk and PErk values!
-initial_states <-  list(
-  E1 = 1,
-  PRaf = 20,
-  PPMek = 0,
-  PPErk = 0
-)
-
-mapkDo <- function(model, doIntervention)
-{
-  intervened_model = function() {
-    model(interventions = doIntervention)
-  }
-  return (intervened_model)
-}
-
-print("Before...")
-firstModel <- mapk_ode_robert(initial_states, rates)
-firstModel()
-
-print("After...")
+print("With Intervention not working")
 intervened <- mapkDo(firstModel, list(PPMek=10))
 intervened()
+testOutIntervention <- ode_sim(intervened, initial_states, times)
+
+print("With Intervention working")
+intervented2 <- mapk_ode_robert(initial_states, rates, list(PPMek=10))
+intervented2()
+testOutIntervention2 <- ode_sim(intervented2, initial_states, times)
+
