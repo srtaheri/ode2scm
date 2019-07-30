@@ -42,7 +42,7 @@ mapk_ode_robert2 <- function(states, rates, interventions = NULL) {
     dE1 <- 0
 
     if(!is.null(interventions$PRaf)) {
-      dPErk <- 0
+      dPRaf <- 0
     } else{
       dPRaf <- rates$raf_activate * (100-states$PRaf) * states$E1 -
         rates$raf_deactivate * states$PRaf
@@ -83,7 +83,7 @@ rates <- list(
 initial_states <-  list(
   E1 = 1,
   PRaf = 0,
-  PPMek = 20,
+  PPMek = 0,
   PPErk = 0
 )
 
@@ -91,11 +91,12 @@ times <- seq(0, 120, by = .1)
 
 firstModel <- mapk_ode_robert2(initial_states, rates)
 firstModel()
+ode_out <- ode_sim(firstModel, initial_states, times)
 
 # I am not sure there is really a point to making do a function
 # if we're using a deterministic functtion
 secondModel <- mapk_ode_robert2(initial_states, rates,
-                                interventions = list(PPMek = 10))
+                                interventions = list(PPErk = 30))
 secondModel()
 
 print(class(secondModel))
@@ -103,3 +104,10 @@ print(class(initial_states))
 print(class(times))
 
 ode_out_intervention <- ode_sim(secondModel, initial_states, times)
+# # result
+# problem: intervened variable will show up as 0
+PRafM <- ode_out_intervention[nrow(ode_out_intervention),]$PRaf
+PPMekM <- ode_out_intervention[nrow(ode_out_intervention),]$PPMek
+PPErkM <- ode_out_intervention[nrow(ode_out_intervention),]$PPErk
+
+

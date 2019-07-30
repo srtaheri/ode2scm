@@ -1,92 +1,50 @@
 library(gdata)
 
 # need to modify for interventions: in case of intervention, do not calculate the equilibrium value? 
-mapk_ode_equilM <- function(states, rates) {
+mapk_ode_equilM <- function(states, rates, interventions = NULL) {
   innerState <- states
   innerRate <- rates
   transition_f <- function(states = innerState, rates = innerRate) {
 
     with(as.list(c(states, rates)), {
-    w3 <- raf_activate/raf_deactivate
-    w2 <- mek_activate/mek_deactivate
-    w1 <- erk_activate/erk_deactivate
-    
-    t3 <- Raf + PRaf
-    t2 <- Mek + PMek + PPMek
-    t1 <- Erk + PErk + PPErk
-    
-    
-    u3 <- w3 * E1
-    k3 <- t3 * (u3/(1+u3))
-
-    print('u3 and k3')
-    print(u3)
-    print(k3)
-    
-    
-    u2 <- w2 * k3
-    # k2 <- t2 * ((u2^2)/(1 + u2 + u2^2))
-    k2 <- 20
-    print('u2 and k2')
-    print(u2)
-    print(k2)
-    
-    u1 <- w1 * k2
-    k1 <- t3 * ((u1^2)/(1 + u1 + u1^2))
-    print('u1 and k1')
-    print(u1)
-    print(k1)
-    
-    list(k3,k2,k1)
-    })
-  }
+      w3 <- raf_activate/raf_deactivate
+      w2 <- mek_activate/mek_deactivate
+      w1 <- erk_activate/erk_deactivate
+      
+      # can we assume that t1, t2 and t3 are all 100? b/c in initial_states we're only keeping PRaf, PPMek and PPErk
+      t3 <- Raf + PRaf
+      t2 <- Mek + PMek + PPMek
+      t1 <- Erk + PErk + PPErk
+      
+      if(!is.null(interventions$PRaf)) {
+        k3 <- interventions$PRaf
+      } else {
+        u3 <- w3 * E1
+        k3 <- t3 * (u3/(1+u3))      
+      }
+      
+      if(!is.null(interventions$PPMek)) {
+        k2 <- interventions$PPMek
+      } else {
+        u2 <- w2 * k3
+        k2 <- t2 * ((u2^2)/(1 + u2 + u2^2))
+      }
+  
+      if(!is.null(interventions$PPErk)) {
+        k1 <- interventions$PPErk
+      } else {
+        u1 <- w1 * k2
+        k1 <- t3 * ((u1^2)/(1 + u1 + u1^2))      
+      }
+  
+      list(k3,k2,k1)
+      
+      })
+    }
   return(transition_f)
   
 }
-mapk_ode_equilM(initial_states, rates)()
-
-
-mapk_ode_simplified <- function(states, rates) {
-  
-  transition_function <- function(t, interventions=NULL) {
-    
-    # intervene if we're supposed to
-    if(!is.null(interventions)) {
-      states = update.list(states, interventions)
-    }
-    
-    # run the code normally
-    with(as.list(c(states, rates)),{
-      
-      print("My states are...")
-      print(unlist(states))
-      
-      dE1 <- 0
-      #print("PPMek intervention is:")
-      #print(is.null(interventions$PRaf))
-      if(is.null(interventions$PRaf)) {
-        dPRaf <- raf_activate * Raf * E1 - raf_deactivate * PRaf
-      }else {
-        dPRaf = 0
-      }
-      if(is.null(interventions$PPMek)) {
-        dPPMek <- (mek_activate ^ 2) * (PRaf ^ 2) * (Mek + PMek) /
-          mek_deactivate - mek_activate * PRaf * PPMek - mek_deactivate * PPMek
-      }else {
-        dPPMek = 0
-      }
-      if(is.null(interventions$PPErk)) {
-        dPPErk <- (erk_activate ^ 2) * (PPMek ^ 2) * (Erk + PErk) /
-          erk_deactivate - erk_activate * PPMek * PPErk - erk_deactivate * PPErk
-      }else {
-        dPPErk = 0
-      }
-      list(c(dE1, dPRaf, dPPMek, dPPErk))
-    })
-  }
-  attr(transition_function, 'rates') <- rates
-  return(transition_function)
-}
+intervention <- list(PPErk = 30)
 
 rates <- list(
   raf_activate = 0.1,
@@ -101,22 +59,12 @@ initial_states <-  list(
   E1 = 1,
   Raf = 100,
   PRaf = 0,
-  Mek = 80,
+  Mek = 100,
   PMek = 0,
-  PPMek = 20,
+  PPMek = 0,
   Erk = 100,
   PErk = 0,
   PPErk = 0
 )
 
-mapkDo <- function(model, intervention)
-{
-  model(interventions = intervention)
-}
-
-print("Before...")
-testOut <- mapk_ode_simplified(initial_states, rates)
-testOut()
-
-print("After...")
-new <- mapkDo(testOut, list(PPMek = 10))
+mapk_ode_equilM(initial_states, rates, intervention)()
