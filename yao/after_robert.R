@@ -88,5 +88,9 @@ times <- seq(0, 120, by = .1)
 
 firstModel <- mapk_ode_robert2(initial_states, rates)
 firstModel()
-secondModel <- mapk_ode_robert2(initial_states, rates, interventions=list(PPMek=10))
+
+# I am not sure there is really a point to making do a function
+# if we're using a deterministic functtion
+secondModel <- mapk_ode_robert2(initial_states, rates,
+                interventions = list(PPMek = 10))
 secondModel()
