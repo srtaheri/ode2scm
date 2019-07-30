@@ -1,6 +1,16 @@
+---
+title: "Test Intervention"
+output: html_document
+---
+
+```{R Libraries}
+
 suppressWarnings(suppressMessages(library(gdata)))
 suppressMessages(suppressMessages(library(tibble)))
+```
 
+
+```{R ODE Function}
 ode_sim <- function(transition_function, initial_states, times){
   print("called")
   initial_states <- structure(as.numeric(initial_states), names = names(initial_states))
@@ -18,7 +28,9 @@ ode_sim <- function(transition_function, initial_states, times){
     )
   )
 }
+```
 
+```{R}
 mapk_ode_robert2 <- function(states, rates, interventions = NULL) {
 
   # avoid recusive argument error
@@ -39,35 +51,44 @@ mapk_ode_robert2 <- function(states, rates, interventions = NULL) {
 
     dE1 <- 0
 
+    ### if the reagent has been intervened upon, the delta state must be zero
+    
+    # for PRaf
     if(!is.null(interventions$PRaf)) {
-      dPRaf <- 0
-    } else{
+      dPErk <- 0
+    } else {
       dPRaf <- rates$raf_activate * (100-states$PRaf) * states$E1 -
         rates$raf_deactivate * states$PRaf
     }
+    
+    #for PPMek
     if(!is.null(interventions$PPMek)){
       dPPMek <- 0
-    } else{
+    } else {
       dPPMek <- (rates$mek_activate ^ 2) * (states$PRaf ^ 2) * (100 - states$PPMek) /
         rates$mek_deactivate - rates$mek_activate * states$PRaf * states$PPMek -
         rates$mek_deactivate * states$PPMek
     }
+    
+    # for PPerk
     if(!is.null(interventions$PPErk)){
       dPPErk <- 0
-    }else{
+    } else {
       dPPErk <- (rates$erk_activate ^ 2) * (states$PPMek ^ 2) * (100 - states$PPErk) /
         rates$erk_deactivate - rates$erk_activate * states$PPMek * states$PPErk -
         rates$erk_deactivate * states$PPErk
     }
-    print("My states are:")
-    print(unlist(states))
+    # returns a list
     list(c(dE1, dPRaf, dPPMek, dPPErk))
   }
   attr(transition_function, 'rates') <- as.list(rates)
   attr(transition_function, 'states') <- as.list(states)
   return(transition_function)
 }
+```
 
+
+```{R}
 rates <- list(
   raf_activate = 0.1,
   raf_deactivate = 0.1,
@@ -81,7 +102,7 @@ rates <- list(
 initial_states <- list(
   E1 = 1,
   PRaf = 0,
-  PPMek = 0,
+  PPMek = 20,
   PPErk = 0
 )
 
@@ -89,19 +110,12 @@ times <- seq(0, 120, by = .1)
 
 firstModel <- mapk_ode_robert2(initial_states, rates)
 firstModel()
-ode_out <- ode_sim(firstModel, initial_states, times)
 
 # I am not sure there is really a point to making do a function
 # if we're using a deterministic functtion
 secondModel <- mapk_ode_robert2(initial_states, rates,
-                                interventions = list(PPErk = 30))
+                                interventions = list(PPMek = 10))
 secondModel()
 
 ode_out_intervention <- ode_sim(secondModel, initial_states, times)
-# # result
-# problem: intervened variable will show up as 0
-PRafM <- ode_out_intervention[nrow(ode_out_intervention),]$PRaf
-PPMekM <- ode_out_intervention[nrow(ode_out_intervention),]$PPMek
-PPErkM <- ode_out_intervention[nrow(ode_out_intervention),]$PPErk
-
-
+```
