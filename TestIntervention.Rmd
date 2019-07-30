@@ -78,6 +78,8 @@ mapk_ode_robert2 <- function(states, rates, interventions = NULL) {
         rates$erk_deactivate - rates$erk_activate * states$PPMek * states$PPErk -
         rates$erk_deactivate * states$PPErk
     }
+    print("My states are:")
+    print(unlist(states))
     # returns a list
     list(c(dE1, dPRaf, dPPMek, dPPErk))
   }
@@ -114,17 +116,20 @@ firstModel()
 # I am not sure there is really a point to making do a function
 # if we're using a deterministic functtion
 secondModel <- mapk_ode_robert2(initial_states, rates,
-                                interventions = list(PPMek = 10))
+                                interventions = list(PPMek = 11, PPErk = 22, PRaf = 33))
 secondModel()
 
-ode_out_intervention <- ode_sim(secondModel, initial_states, times)
+#ode_out_intervention <- ode_sim(secondModel, initial_states, times)
 
 # # result
 # problem: intervened variable will show up as 0
-PRafM <- ode_out_intervention[nrow(ode_out_intervention),]$PRaf
-PPMekM <- ode_out_intervention[nrow(ode_out_intervention),]$PPMek
-PPErkM <- ode_out_intervention[nrow(ode_out_intervention),]$PPErk
+# PRafM <- ode_out_intervention[nrow(ode_out_intervention),]$PRaf
+# PPMekM <- ode_out_intervention[nrow(ode_out_intervention),]$PPMek
+# PPErkM <- ode_out_intervention[nrow(ode_out_intervention),]$PPErk
 ```
+
+
+
 ```{r equilibrium}
 library(gdata)
 
@@ -196,4 +201,34 @@ initial_states <-  list(
 )
 
 mapk_ode_equilM(initial_states, rates, intervention)()
+```
+
+
+```{R}
+library(gdata)
+
+
+intList <- list(raf = 10, thing = 20)
+
+x <- list(
+  raf = list(normal = 1, delta = 100),
+  erk = list(normal = 2, delta = 200),
+  thing = list(normal = 3, delta = 300)
+)
+
+for(i in names(x)) {
+  print(i)
+  if(i %in% names(intList)) {
+    x[[i]]$delta <- 0
+  }
+}
+
+outputList <- c()
+
+for(r in x) {
+  
+  outputList <- c(outputList, r$delta)
+}
+names(outputList) <- names(x)
+outputList
 ```
