@@ -208,12 +208,13 @@ mapk_ode_equilM(initial_states, rates, intervention)()
 library(gdata)
 
 
-intList <- list(raf = 10, thing = 20)
+intList <- list(raf = 10)
+states <- list(raf = 100)
 
 x <- list(
   raf = list(normal = 1, delta = 100),
   erk = list(normal = 2, delta = 200),
-  thing = list(normal = 3, delta = 300)
+  thing = list(normal = 3, delta = states$raf + 100)
 )
 
 for(i in names(x)) {
@@ -232,3 +233,21 @@ for(r in x) {
 names(outputList) <- names(x)
 outputList
 ```
+
+
+```{R}
+
+
+whatever <- function(x,y) {x * y}
+
+whatever2 <- function(x,y){x / y}
+
+model <- c(whatever, whatever2)
+
+for(i in model) {
+  print(do.call(i, list(4,5)))
+}
+```
+
+
+
