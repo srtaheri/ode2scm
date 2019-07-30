@@ -156,6 +156,10 @@ mapk_ode_intervention <- function(states, rates) {
 }
 
 mapk_ode_intervention_instance <- mapk_ode_intervention(initial_states, rates)
+print(class(mapk_ode_intervention_instance))
+print(class(initial_states))
+print(class(times))
+
 ode_out_intervention <- ode_sim(mapk_ode_intervention_instance, initial_states, times)
 # 120.0	1	Raf=80	PRaf=20	Mek=33.33333	PMek=33.33333	PPMek=33.33333	Erk=6.47482	PErk=21.58273	PPErk=71.94245
 ```

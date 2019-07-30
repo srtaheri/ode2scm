@@ -2,12 +2,11 @@ suppressWarnings(suppressMessages(library(gdata)))
 suppressMessages(suppressMessages(library(tibble)))
 
 ode_sim <- function(transition_function, initial_states, times){
+  print("called")
   initial_states <- structure(as.numeric(initial_states), names = names(initial_states))
-  # print(initial_states)
-  # print(transition_function)
   rates <- attr(transition_function, 'rates')
   rates <- structure(as.numeric(rates), names = names(rates))
-  # print(rates)
+  rates <- as.list(rates)
   as_tibble(
     as.data.frame(
       deSolve::ode(
@@ -19,6 +18,7 @@ ode_sim <- function(transition_function, initial_states, times){
     )
   )
 }
+
 
 
 mapk_ode_robert2 <- function(states, rates, interventions = NULL) {
@@ -35,6 +35,9 @@ mapk_ode_robert2 <- function(states, rates, interventions = NULL) {
         states[[int]] <- interventions[[int]]
       }
     }
+
+    states <- as.list(states)
+    rates <- as.list(rates)
 
     dE1 <- 0
 
@@ -92,5 +95,11 @@ firstModel()
 # I am not sure there is really a point to making do a function
 # if we're using a deterministic functtion
 secondModel <- mapk_ode_robert2(initial_states, rates,
-                interventions = list(PPMek = 10))
+                                interventions = list(PPMek = 10))
 secondModel()
+
+print(class(secondModel))
+print(class(initial_states))
+print(class(times))
+
+ode_out_intervention <- ode_sim(secondModel, initial_states, times)
