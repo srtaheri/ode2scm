@@ -78,9 +78,13 @@ mapk_ode_robert2 <- function(states, rates, interventions = NULL) {
         rates$erk_deactivate - rates$erk_activate * states$PPMek * states$PPErk -
         rates$erk_deactivate * states$PPErk
     }
-    print("My states are:")
-    print(unlist(states))
+    # print("My states are:")
+    # print(unlist(states))
     # returns a list
+    
+    print("list of ds")
+    print(list(c(dE1, dPRaf, dPPMek, dPPErk)))
+    print("done printing")
     list(c(dE1, dPRaf, dPPMek, dPPErk))
   }
   attr(transition_function, 'rates') <- as.list(rates)
@@ -285,8 +289,11 @@ meta_model <- function(list_of_models, list_of_ds, rates, states, interventions 
     for (elem in names(interventions)) {
       result[[paste0("d", elem)]] <- 0
     }
+    print("printing result")
     print(result)
-    print(length(result))
+    print("done printing")
+    # print(length(result))
+    # print(unlist(result))
     result  
   }
   
@@ -367,7 +374,7 @@ ode_sim_meta_model <- function(meta_model_object, initial_states, times){
   )
 }
 test <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states)
-ode_out_meta_model <- ode_sim_meta_model(firstModel, initial_states, times)
+ode_out_meta_model <- ode_sim_meta_model(test, initial_states, times)
 
 # meta_model(cdE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states, list())
 
