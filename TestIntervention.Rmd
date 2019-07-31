@@ -238,14 +238,41 @@ outputList
 ```{R}
 
 
-whatever <- function(x,y) {x * y}
+whatever <- function(x,y,activate,...) {
+  x * y * activate
 
-whatever2 <- function(x,y){x / y}
+}
+
+whatever2 <- function(x,y,deactivate,...){x * deactivate / y}
+
+states <- list(
+  x = 4,
+  y = 5
+)
+
+rates <- list(
+  activate = 0.1,
+  deactivate = 0.2
+)
 
 model <- c(whatever, whatever2)
 
+meta_model <- function(list_of_models, list_of_ds, rates, states, intervention = NULL) {
+  # check that list_of_models and list_of_ds are of the same length
+  for (i in list_of_models) {
+    print(do.call(i, as.list(c(rates, states))))
+    # how to concate the list_of_ds with the result
+  }
+}
+
+# without intervention
+meta_model(model, list("dx","dy"), rates, states)
+
+# with intervention
+
+
 for(i in model) {
-  print(do.call(i, list(4,5)))
+  print(do.call(i, as.list(c(states,rates))))
 }
 ```
 
