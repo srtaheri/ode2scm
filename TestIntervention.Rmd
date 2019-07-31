@@ -235,15 +235,14 @@ outputList
 ```
 
 
-```{R}
-
-
-whatever <- function(x,y,activate,...) {
+```{R prototype of meta model}
+dx <- function(x,y,activate,...) {
   x * y * activate
-
 }
 
-whatever2 <- function(x,y,deactivate,...){x * deactivate / y}
+dy <- function(x,y,deactivate,...){
+  x * deactivate / y
+}
 
 states <- list(
   x = 4,
@@ -255,21 +254,41 @@ rates <- list(
   deactivate = 0.2
 )
 
-model <- c(whatever, whatever2)
+model <- c(dx, dy)
 
-meta_model <- function(list_of_models, list_of_ds, rates, states, intervention = NULL) {
+meta_model <- function(list_of_models, list_of_ds, rates, states, interventions = NULL) {
   # check that list_of_models and list_of_ds are of the same length
-  for (i in list_of_models) {
-    print(do.call(i, as.list(c(rates, states))))
-    # how to concate the list_of_ds with the result
+  # throw an error if otherwise
+  
+  # update states with interventions 
+  if(!is.null(interventions)) {
+    for(int in names(interventions)){
+      states[[int]] <- interventions[[int]]
+    }
   }
+  
+  # calculate original d
+  result <- list()
+  var <- as.list(c(rates, states))
+  for (i in list_of_models) {
+    result <- c(result, (do.call(i, var)))
+  }
+  
+  result <- structure(result, names=list_of_ds)
+  
+  # update intervention
+  for (elem in names(interventions)) {
+    result[[paste0("d", elem)]] <- 0
+  }
+  
+  result
 }
 
 # without intervention
 meta_model(model, list("dx","dy"), rates, states)
 
 # with intervention
-
+meta_model(model, list("dx","dy"), rates, states, list(x = 100))
 
 for(i in model) {
   print(do.call(i, as.list(c(states,rates))))
