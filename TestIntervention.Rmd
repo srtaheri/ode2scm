@@ -294,7 +294,7 @@ meta_model <- function(list_of_models, list_of_ds, rates, states, interventions 
     print("done printing")
     # print(length(result))
     # print(unlist(result))
-    result  
+    list(unlist(result))  
   }
   
   
@@ -373,7 +373,13 @@ ode_sim_meta_model <- function(meta_model_object, initial_states, times){
     )
   )
 }
-test <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states)
+
+#before intervention
+test_bi <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states)
+
+#after intervention
+test_ai <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states, interventions = list(PRaf = 50, PPMek = 30))
+
 ode_out_meta_model <- ode_sim_meta_model(test, initial_states, times)
 
 # meta_model(cdE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states, list())
