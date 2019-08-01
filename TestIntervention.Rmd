@@ -10,6 +10,28 @@ suppressMessages(suppressMessages(library(tibble)))
 ```
 
 
+```{r initial values}
+rates <- list(
+  raf_activate = 0.1,
+  raf_deactivate = 0.1,
+  mek_activate = 0.1,
+  mek_deactivate = 2.0,
+  erk_activate = 0.1,
+  erk_deactivate = 1.0
+)
+
+# so I guess we don't need Raf, Mek, PMek, Erk and PErk values!
+initial_states <- list(
+  E1 = 1,
+  PRaf = 0,
+  PPMek = 20,
+  PPErk = 0
+)
+
+times <- seq(0, 120, by = .1)
+```
+
+
 ```{R ODE Function}
 ode_sim <- function(transition_function, initial_states, times){
   print("called")
@@ -31,7 +53,7 @@ ode_sim <- function(transition_function, initial_states, times){
 ```
 
 ```{R}
-mapk_ode_robert2 <- function(states, rates, interventions = NULL) {
+mapk_ode <- function(states, rates, interventions = NULL) {
 
   # avoid recusive argument error
   innerRates <- rates
@@ -95,31 +117,12 @@ mapk_ode_robert2 <- function(states, rates, interventions = NULL) {
 
 
 ```{R}
-rates <- list(
-  raf_activate = 0.1,
-  raf_deactivate = 0.1,
-  mek_activate = 0.1,
-  mek_deactivate = 2.0,
-  erk_activate = 0.1,
-  erk_deactivate = 1.0
-)
-
-# so I guess we don't need Raf, Mek, PMek, Erk and PErk values!
-initial_states <- list(
-  E1 = 1,
-  PRaf = 0,
-  PPMek = 20,
-  PPErk = 0
-)
-
-times <- seq(0, 120, by = .1)
-
-firstModel <- mapk_ode_robert2(initial_states, rates)
+firstModel <- mapk_ode(initial_states, rates)
 firstModel()
 
 # I am not sure there is really a point to making do a function
 # if we're using a deterministic functtion
-secondModel <- mapk_ode_robert2(initial_states, rates,
+secondModel <- mapk_ode(initial_states, rates,
                                 interventions = list(PPMek = 11, PPErk = 22, PRaf = 33))
 secondModel()
 
@@ -181,207 +184,10 @@ mapk_ode_equilM <- function(states, rates, interventions = NULL) {
   return(transition_f)
   
 }
+
 intervention <- list(PPErk = 30)
-
-rates <- list(
-  raf_activate = 0.1,
-  raf_deactivate = 0.1,
-  mek_activate = 0.1,
-  mek_deactivate = 2.0,
-  erk_activate = 0.1,
-  erk_deactivate = 1.0
-)
-
-initial_states <-  list(
-  E1 = 1,
-  Raf = 100,
-  PRaf = 0,
-  Mek = 100,
-  PMek = 0,
-  PPMek = 0,
-  Erk = 100,
-  PErk = 0,
-  PPErk = 0
-)
-
 mapk_ode_equilM(initial_states, rates, intervention)()
 ```
 
 
-```{R}
-library(gdata)
 
-
-intList <- list(raf = 10)
-states <- list(raf = 100)
-
-x <- list(
-  raf = list(normal = 1, delta = 100),
-  erk = list(normal = 2, delta = 200),
-  thing = list(normal = 3, delta = states$raf + 100)
-)
-
-for(i in names(x)) {
-  print(i)
-  if(i %in% names(intList)) {
-    x[[i]]$delta <- 0
-  }
-}
-
-outputList <- c()
-
-for(r in x) {
-  
-  outputList <- c(outputList, r$delta)
-}
-names(outputList) <- names(x)
-outputList
-```
-
-
-```{R prototype of meta model}
-dx <- function(x,y,activate,...) {
-  x * y * activate
-}
-
-dy <- function(x,y,deactivate,...){
-  x * deactivate / y
-}
-
-states <- list(
-  x = 4,
-  y = 5
-)
-
-rates <- list(
-  activate = 0.1,
-  deactivate = 0.2
-)
-
-model <- c(dx, dy)
-
-meta_model <- function(list_of_models, list_of_ds, rates, states, interventions = NULL) {
-  innerRates <- rates
-  innerStates <- states
-  transition_function <- function(t, states = innerStates, rates = innerRates) {
-  # check that list_of_models and list_of_ds are of the same length
-  # throw an error if otherwise
-    if (length(list_of_models) != length(list_of_ds)) 
-      stop("Number of functions do not match nubmer of deltas. Check your input.") 
-    
-    # update states with interventions 
-    if(!is.null(interventions)) {
-      for(int in names(interventions)){
-        states[[int]] <- interventions[[int]]
-      }
-    }
-    
-    # calculate original d
-    result <- list()
-    var <- as.list(c(rates, states))
-    for (i in list_of_models) {
-      result <- c(result, (do.call(i, var)))
-    }
-    
-    result <- structure(result, names=list_of_ds)
-    
-    # update intervention
-    for (elem in names(interventions)) {
-      result[[paste0("d", elem)]] <- 0
-    }
-    print("printing result")
-    print(result)
-    print("done printing")
-    # print(length(result))
-    # print(unlist(result))
-    list(unlist(result))  
-  }
-  
-  
-  attr(transition_function, 'rates') <- as.list(rates)
-  attr(transition_function, 'states') <- as.list(states)
-  return(transition_function)
-}
-
-# without intervention
-meta_model(model, list("dx", "dy"), rates, states)
-
-# with intervention
-meta_model(model, list("dx","dy"), rates, states, list(x = 100))
-
-for(i in model) {
-  print(do.call(i, as.list(c(states,rates))))
-}
-```
-
-
-```{R actual model}
-dE1 <- function(...) {
-  0
-}
-
-dPRaf <- function(raf_activate, PRaf, E1, raf_deactivate, TRaf = 100, ...) {
-  raf_activate * (TRaf-PRaf) * E1 - raf_deactivate * PRaf
-}
-
-dPPMek <- function(mek_activate, mek_deactivate, PRaf, PPMek, TMek = 100, ...) {
-  (mek_activate ^ 2) * (PRaf ^ 2) * (TMek - PPMek) / mek_deactivate -       mek_activate * PRaf * PPMek -
-    mek_deactivate * PPMek
-}
-
-dPPErk <- function(erk_activate, erk_deactivate, PPMek, PPErk, TErk = 100, ...) {
-  (erk_activate ^ 2) * (PPMek ^ 2) * (TErk - PPErk) / erk_deactivate -      erk_activate * PPMek * PPErk -
-    erk_deactivate * PPErk
-}
-
-
-rates <- list(
-  raf_activate = 0.1,
-  raf_deactivate = 0.1,
-  mek_activate = 0.1,
-  mek_deactivate = 2.0,
-  erk_activate = 0.1,
-  erk_deactivate = 1.0
-)
-
-# so I guess we don't need Raf, Mek, PMek, Erk and PErk values!
-initial_states <- list(
-  E1 = 1,
-  PRaf = 0,
-  PPMek = 0,
-  PPErk = 0
-)
-
-
-```
-
-``` {R ode moment of truth}
-ode_sim_meta_model <- function(meta_model_object, initial_states, times){
-  print("called")
-  initial_states <- structure(as.numeric(initial_states), names = names(initial_states))
-  rates <- attr(meta_model_object, 'rates')
-  rates <- structure(as.numeric(rates), names = names(rates))
-  rates <- as.list(rates)
-  as_tibble(
-    as.data.frame(
-      deSolve::ode(
-        y = initial_states,
-        times = times,
-        func = meta_model_object,
-        parms = rates
-      )
-    )
-  )
-}
-
-#before intervention
-test_bi <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states)
-
-#after intervention
-test_ai <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states, interventions = list(PRaf = 50, PPMek = 30))
-
-ode_out_meta_model <- ode_sim_meta_model(test, initial_states, times)
-
-# meta_model(cdE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states, list())
-
-```

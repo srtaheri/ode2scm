@@ -1,0 +1,179 @@
+---
+title: "Test Intervention"
+output: html_document
+---
+
+```{R Libraries}
+suppressWarnings(suppressMessages(library(gdata)))
+suppressMessages(suppressMessages(library(tibble)))
+```
+
+```{r actual model}
+# define MAPK model
+dE1 <- function(...) {
+  0
+}
+
+dPRaf <- function(raf_activate, PRaf, E1, raf_deactivate, TRaf = 100, ...) {
+  raf_activate * (TRaf-PRaf) * E1 - raf_deactivate * PRaf
+}
+
+dPPMek <- function(mek_activate, mek_deactivate, PRaf, PPMek, TMek = 100, ...) {
+  (mek_activate ^ 2) * (PRaf ^ 2) * (TMek - PPMek) / mek_deactivate -       mek_activate * PRaf * PPMek -
+    mek_deactivate * PPMek
+}
+
+dPPErk <- function(erk_activate, erk_deactivate, PPMek, PPErk, TErk = 100, ...) {
+  (erk_activate ^ 2) * (PPMek ^ 2) * (TErk - PPErk) / erk_deactivate -      erk_activate * PPMek * PPErk -
+    erk_deactivate * PPErk
+}
+
+# define initial rates
+rates <- list(
+  raf_activate = 0.1,
+  raf_deactivate = 0.1,
+  mek_activate = 0.1,
+  mek_deactivate = 2.0,
+  erk_activate = 0.1,
+  erk_deactivate = 1.0
+)
+
+# so I guess we don't need Raf, Mek, PMek, Erk and PErk values!
+initial_states <- list(
+  E1 = 1,
+  PRaf = 0,
+  PPMek = 0,
+  PPErk = 0
+)
+
+times <- seq(0, 120, by = .1)
+```
+
+
+```{R prototype of meta model}
+
+meta_model <- function(list_of_models, list_of_ds, rates, states, interventions = NULL) {
+  innerRates <- rates
+  innerStates <- states
+  transition_function <- function(t, states = innerStates, rates = innerRates) {
+  # check that list_of_models and list_of_ds are of the same length
+  # throw an error if otherwise
+    if (length(list_of_models) != length(list_of_ds)) 
+      stop("Number of functions do not match nubmer of deltas. Check your input.") 
+    
+    # update states with interventions 
+    if(!is.null(interventions)) {
+      for(int in names(interventions)){
+        states[[int]] <- interventions[[int]]
+      }
+    }
+    
+    # calculate original d
+    result <- list()
+    var <- as.list(c(rates, states))
+    for (i in list_of_models) {
+      result <- c(result, (do.call(i, var)))
+    }
+    
+    result <- structure(result, names=list_of_ds)
+    
+    # update intervention
+    for (elem in names(interventions)) {
+      result[[paste0("d", elem)]] <- 0
+    }
+    list(unlist(result))  
+  }
+  
+  
+  attr(transition_function, 'rates') <- as.list(rates)
+  attr(transition_function, 'states') <- as.list(states)
+  return(transition_function)
+}
+```
+
+
+
+``` {R ode moment of truth}
+ode_sim_meta_model <- function(meta_model_object, initial_states, times){
+  print("called")
+  initial_states <- structure(as.numeric(initial_states), names = names(initial_states))
+  rates <- attr(meta_model_object, 'rates')
+  rates <- structure(as.numeric(rates), names = names(rates))
+  rates <- as.list(rates)
+  as_tibble(
+    as.data.frame(
+      deSolve::ode(
+        y = initial_states,
+        times = times,
+        func = meta_model_object,
+        parms = rates
+      )
+    )
+  )
+}
+
+#before intervention
+test_bi <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states)
+ode_out_meta_model <- ode_sim_meta_model(test_bi, initial_states, times)
+
+#after intervention
+test_ai <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states, interventions = list(PRaf = 50, PPMek = 30))
+ode_out_meta_model <- ode_sim_meta_model(test_ai, initial_states, times)
+```
+
+
+
+
+
+```{r equilibrium}
+library(gdata)
+
+# need to modify for interventions: in case of intervention, do not calculate the equilibrium value? 
+mapk_ode_equilM <- function(states, rates, interventions = NULL) {
+  innerState <- states
+  innerRate <- rates
+  transition_f <- function(states = innerState, rates = innerRate) {
+
+    with(as.list(c(states, rates)), {
+      w3 <- raf_activate/raf_deactivate
+      w2 <- mek_activate/mek_deactivate
+      w1 <- erk_activate/erk_deactivate
+      
+      # can we assume that t1, t2 and t3 are all 100? b/c in initial_states we're only keeping PRaf, PPMek and PPErk
+      t3 <- Raf + PRaf
+      t2 <- Mek + PMek + PPMek
+      t1 <- Erk + PErk + PPErk
+      
+      if(!is.null(interventions$PRaf)) {
+        k3 <- interventions$PRaf
+      } else {
+        u3 <- w3 * E1
+        k3 <- t3 * (u3/(1+u3))      
+      }
+      
+      if(!is.null(interventions$PPMek)) {
+        k2 <- interventions$PPMek
+      } else {
+        u2 <- w2 * k3
+        k2 <- t2 * ((u2^2)/(1 + u2 + u2^2))
+      }
+  
+      if(!is.null(interventions$PPErk)) {
+        k1 <- interventions$PPErk
+      } else {
+        u1 <- w1 * k2
+        k1 <- t3 * ((u1^2)/(1 + u1 + u1^2))      
+      }
+  
+      list(k3,k2,k1)
+      
+      })
+    }
+  return(transition_f)
+  
+}
+
+intervention <- list(PPErk = 30)
+
+mapk_ode_equilM(initial_states, rates, intervention)()
+```
