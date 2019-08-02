@@ -92,10 +92,8 @@ meta_model <- function(list_of_models, list_of_ds, rates, states, interventions 
 ```
 
 
-
-``` {R ode moment of truth}
+```{R simulation}
 ode_sim_meta_model <- function(meta_model_object, initial_states, times){
-  print("called")
   initial_states <- structure(as.numeric(initial_states), names = names(initial_states))
   rates <- attr(meta_model_object, 'rates')
   rates <- structure(as.numeric(rates), names = names(rates))
@@ -111,14 +109,18 @@ ode_sim_meta_model <- function(meta_model_object, initial_states, times){
     )
   )
 }
+```
 
+``` {R ode moment of truth}
 #before intervention
 test_bi <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states)
-ode_out_meta_model <- ode_sim_meta_model(test_bi, initial_states, times)
+test_bi()
+ode_out_meta_model_bi <- ode_sim_meta_model(test_bi, initial_states, times)
 
 #after intervention
 test_ai <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states, interventions = list(PRaf = 50, PPMek = 30))
-ode_out_meta_model <- ode_sim_meta_model(test_ai, initial_states, times)
+test_ai()
+ode_out_meta_model_ai <- ode_sim_meta_model(test_ai, initial_states, times)
 ```
 
 
@@ -129,7 +131,7 @@ ode_out_meta_model <- ode_sim_meta_model(test_ai, initial_states, times)
 library(gdata)
 
 # need to modify for interventions: in case of intervention, do not calculate the equilibrium value? 
-mapk_ode_equilM <- function(states, rates, interventions = NULL) {
+mapk_ode_equilM <- function(states, rates, TRaf, TMek, TErk, interventions = NULL) {
   innerState <- states
   innerRate <- rates
   transition_f <- function(states = innerState, rates = innerRate) {
@@ -139,10 +141,9 @@ mapk_ode_equilM <- function(states, rates, interventions = NULL) {
       w2 <- mek_activate/mek_deactivate
       w1 <- erk_activate/erk_deactivate
       
-      # can we assume that t1, t2 and t3 are all 100? b/c in initial_states we're only keeping PRaf, PPMek and PPErk
-      t3 <- Raf + PRaf
-      t2 <- Mek + PMek + PPMek
-      t1 <- Erk + PErk + PPErk
+      t3 <- TRaf
+      t2 <- TMek
+      t1 <- TErk
       
       if(!is.null(interventions$PRaf)) {
         k3 <- interventions$PRaf
@@ -175,5 +176,46 @@ mapk_ode_equilM <- function(states, rates, interventions = NULL) {
 
 intervention <- list(PPErk = 30)
 
-mapk_ode_equilM(initial_states, rates, intervention)()
+mapk_ode_equilM(states = initial_states, rates, TRaf = 100, TMek = 100, TErk = 100, intervention)()
+```
+# Comparison between steady state and stochastic simulation without intervention
+
+```{r}
+g1 <- function(a) a / (1 + a )
+g2 <- function(a) a^2 / (1 + a + a^2)
+
+TRaf = 100
+TMek = 100
+TErk = 100
+
+E1 <- initial_states$E1
+Raf <- TRaf * g1(E1 * rates$raf_activate / rates$raf_deactivate)
+Mek <- TMek * g2(Raf * rates$mek_activate / rates$mek_deactivate)
+Erk <- TErk * g2(Mek * rates$erk_activate / rates$erk_deactivate)
+
+steady_states <- list(Raf=Raf, Mek=Mek, Erk=Erk)
+```
+
+The trajectories (solid lines) represent the evolution of the amounts of MAP3K (green), MAP2K (blue), and MAPK (red) in time. The dashed lines are the calculated equilibrium values.
+
+
+```{r}
+plot(times, ode_out_meta_model_bi$PRaf, type='l', col='darkgreen', ylim=c(0, 110), ylab = 'amount')
+lines(ode_out_meta_model_bi$PPMek, type='l', col='darkblue', ylim=c(0, 110))
+lines(ode_out_meta_model_bi$PPErk, type='l', col='darkred', ylim=c(0, 110))
+abline(h = Raf, col='darkgreen', lty=2)
+abline(h = Mek, col='darkblue', lty=2)
+abline(h = Erk, col='darkred', lty=2)
+```
+
+
+## Comparison between $\text{equil}(\text{do}(\mathbb{M}, X = x))$ and $\text{do}(\text{equil}(\mathbb{M}, X = x))$
+
+```{r}
+plot(times, ode_out_meta_model_ai$PRaf, type='l', col='darkgreen', ylim=c(0, 110), ylab = 'amount')
+lines(ode_out_meta_model_ai$PPMek, type='l', col='darkblue', ylim=c(0, 110))
+lines(ode_out_meta_model_ai$PPErk, type='l', col='darkred', ylim=c(0, 110))
+abline(h = Raf, col='darkgreen', lty=2)
+abline(h = Mek, col='darkblue', lty=2)
+abline(h = Erk, col='darkred', lty=2)
 ```
