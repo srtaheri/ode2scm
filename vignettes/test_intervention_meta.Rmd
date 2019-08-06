@@ -64,7 +64,7 @@ meta_model <- function(list_of_models, list_of_ds, rates, states, interventions 
     }
   }
   
-  print(innerStates)
+  # print(innerStates)
   
   transition_function <- function(t, states = innerStates, rates = innerRates, interventions = innerIntervention) {
   # check that list_of_models and list_of_ds are of the same length
@@ -100,7 +100,7 @@ meta_model <- function(list_of_models, list_of_ds, rates, states, interventions 
   attr(transition_function, 'rates') <- as.list(rates)
   attr(transition_function, 'states') <- as.list(states)
   attr(transition_function, 'interventions') <- as.list(interventions)
-  print(innerStates)
+  # print(innerStates)
   return(transition_function)
 }
 ```
@@ -116,7 +116,7 @@ ode_sim_meta_model <- function(meta_model_object, initial_states, times, interve
     }
   }
   initial_states <- structure(as.numeric(initial_states), names = names(initial_states))
-  print(initial_states)
+  # print(initial_states)
   rates <- attr(meta_model_object, 'rates')
   rates <- structure(as.numeric(rates), names = names(rates))
   rates <- as.list(rates)
@@ -140,9 +140,9 @@ test_bi()
 ode_out_meta_model_bi <- ode_sim_meta_model(test_bi, initial_states, times)
 
 #after intervention
-test_ai <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states, interventions = list(PPMek = 40, PPErk = 30))
-test_ai()
-ode_out_meta_model_ai <- ode_sim_meta_model(test_ai, initial_states, times, interventions = list(PPMek = 40, PPErk = 30))
+intervention_PRaf_PPMek <- list(PPMek = 40, PRaf = 30)
+test_ai_PRaf_PPMek <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states, interventions = intervention_PRaf_PPMek)
+ode_out_meta_model_ai_PRaf_PPMek <- ode_sim_meta_model(test_ai_PRaf_PPMek, initial_states, times, interventions = intervention_PRaf_PPMek)
 ```
 
 
@@ -188,7 +188,7 @@ mapk_ode_equilM <- function(states, rates, TRaf, TMek, TErk, interventions = NUL
         k1 <- t3 * ((u1^2)/(1 + u1 + u1^2))      
       }
   
-      list(k3,k2,k1)
+      list("PRaf" = k3, "PPMek" = k2, "PPErk" = k1)
       
       })
     }
@@ -196,9 +196,9 @@ mapk_ode_equilM <- function(states, rates, TRaf, TMek, TErk, interventions = NUL
   
 }
 
-intervention <- list(PPErk = 30)
+#intervention <- list(PPErk = 30)
 # do(equil(M,X=x))
-mapk_ode_equilM(states = initial_states, rates, TRaf = 100, TMek = 100, TErk = 100, intervention)()
+#mapk_ode_equilM(states = initial_states, rates, TRaf = 100, TMek = 100, TErk = 100, intervention)()
 
 # What is equil(do(M,X=x))? I think do(M,X=x) is test_ai. Is it right?
 ```
@@ -234,18 +234,151 @@ abline(h = Erk, col='darkred', lty=2)}
 
 
 ## Comparison between $\text{equil}(\text{do}(\mathbb{M}, X = x))$ and $\text{do}(\text{equil}(\mathbb{M}, X = x))$
+```{r}
+# intervene on PRaf
+# equil(do(M, X=x))
+intervention_PRaf <- list(PRaf = 30)
+test_ai_PRaf <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states, interventions = intervention_PRaf)
+
+ode_out_meta_model_ai_PRaf <- ode_sim_meta_model(test_ai_PRaf, initial_states, times, interventions = intervention_PRaf)
+
+# do(equil(M, X = x))
+do_equil_M_PRaf <- mapk_ode_equilM(states = initial_states, rates, TRaf = 100, TMek = 100, TErk = 100, intervention_PRaf)()
+
+
+{plot(times, ode_out_meta_model_ai_PRaf$PRaf, type='l', col='darkgreen', ylim=c(0, 110), ylab = 'amount')
+lines(ode_out_meta_model_ai_PRaf$PPMek, type='l', col='darkblue', ylim=c(0, 110))
+lines(ode_out_meta_model_ai_PRaf$PPErk, type='l', col='darkred', ylim=c(0, 110))
+abline(h = do_equil_M_PRaf$PRaf, col='darkgreen', lty=2)
+abline(h = do_equil_M_PRaf$PPMek, col='darkblue', lty=2)
+abline(h = do_equil_M_PRaf$PPErk, col='darkred', lty=2)
+}
+```
 
 ```{r}
+# intervene on PPMek
+# equil(do(M, X=x))
+intervention_PPMek <- list(PPMek = 40)
+test_ai_PPMek <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states, interventions = intervention_PPMek)
+
+ode_out_meta_model_ai_PPMek <- ode_sim_meta_model(test_ai_PPMek, initial_states, times, interventions = intervention_PPMek)
+
+# do(equil(M, X = x))
+do_equil_M_PPMek <- mapk_ode_equilM(states = initial_states, rates, TRaf = 100, TMek = 100, TErk = 100, intervention_PPMek)()
+
+
+{plot(times, ode_out_meta_model_ai_PPMek$PRaf, type='l', col='darkgreen', ylim=c(0, 110), ylab = 'amount')
+lines(ode_out_meta_model_ai_PPMek$PPMek, type='l', col='darkblue', ylim=c(0, 110))
+lines(ode_out_meta_model_ai_PPMek$PPErk, type='l', col='darkred', ylim=c(0, 110))
+abline(h = do_equil_M_PPMek$PRaf, col='darkgreen', lty=2)
+abline(h = do_equil_M_PPMek$PPMek, col='darkblue', lty=2)
+abline(h = do_equil_M_PPMek$PPErk, col='darkred', lty=2)
+}
+```
+
+
+```{r}
+# intervene on PPErk -> doesn't hold!
+# equil(do(M, X=x))
+intervention_PPErk <- list(PPErk = 60)
+test_ai_PPErk <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states, interventions = intervention_PPErk)
+
+ode_out_meta_model_ai_PPErk <- ode_sim_meta_model(test_ai_PPErk, initial_states, times, interventions = intervention_PPErk)
+
+# do(equil(M, X = x))
+do_equil_M_PPErk <- mapk_ode_equilM(states = initial_states, rates, TRaf = 100, TMek = 100, TErk = 100, intervention_PPErk)()
+
+
+{plot(times, ode_out_meta_model_ai_PPErk$PRaf, type='l', col='darkgreen', ylim=c(0, 110), ylab = 'amount')
+lines(ode_out_meta_model_ai_PPErk$PPMek, type='l', col='darkblue', ylim=c(0, 110))
+lines(ode_out_meta_model_ai_PPErk$PPErk, type='l', col='darkred', ylim=c(0, 110))
+abline(h = do_equil_M_PPErk$PRaf, col='darkgreen', lty=2)
+abline(h = do_equil_M_PPErk$PPMek, col='darkblue', lty=2)
+abline(h = do_equil_M_PPErk$PPErk, col='darkred', lty=2)
+}
+```
+
+```{r}
+# intervene on PRaf and PPMek
 # calculate do(equil(M, X = x))
 
-do_equil_M_PPMek <- mapk_ode_equilM(states = initial_states, rates, TRaf = 100, TMek = 100, TErk = 100, list(PPMek = 40, PPErk = 30))()
+intervention_PRaf_PPMek <- list(PPMek = 40, PRaf = 30)
+test_ai_PRaf_PPMek <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states, interventions = intervention_PRaf_PPMek)
+ode_out_meta_model_ai_PRaf_PPMek <- ode_sim_meta_model(test_ai_PRaf_PPMek, initial_states, times, interventions = intervention_PRaf_PPMek)
+
+do_equil_M_PPMek_PRaf <- mapk_ode_equilM(states = initial_states, rates, TRaf = 100, TMek = 100, TErk = 100, intervention_PRaf_PPMek)()
 
 
-{plot(times, ode_out_meta_model_ai$PRaf, type='l', col='darkgreen', ylim=c(0, 110), ylab = 'amount')
-lines(ode_out_meta_model_ai$PPMek, type='l', col='darkblue', ylim=c(0, 110))
-lines(ode_out_meta_model_ai$PPErk, type='l', col='darkred', ylim=c(0, 110))
-abline(h = do_equil_M_PPMek[[1]], col='darkgreen', lty=2)
-abline(h = do_equil_M_PPMek[[2]], col='darkblue', lty=2)
-abline(h = do_equil_M_PPMek[[3]], col='darkred', lty=2)
+{plot(times, ode_out_meta_model_ai_PRaf_PPMek$PRaf, type='l', col='darkgreen', ylim=c(0, 110), ylab = 'amount')
+lines(ode_out_meta_model_ai_PRaf_PPMek$PPMek, type='l', col='darkblue', ylim=c(0, 110))
+lines(ode_out_meta_model_ai_PRaf_PPMek$PPErk, type='l', col='darkred', ylim=c(0, 110))
+abline(h = do_equil_M_PPMek_PRaf$PRaf, col='darkgreen', lty=2)
+abline(h = do_equil_M_PPMek_PRaf$PPMek, col='darkblue', lty=2)
+abline(h = do_equil_M_PPMek_PRaf$PPErk, col='darkred', lty=2)
+}
+```
+
+
+```{r}
+# intervene on PRaf and PPErk
+# equil(do(M, X=x))
+intervention_PRaf_PPErk <- list(PRaf = 30, PPErk = 50)
+test_ai_PRaf_PPErk <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states, interventions = intervention_PRaf_PPErk)
+
+ode_out_meta_model_ai_PRaf_PPErk <- ode_sim_meta_model(test_ai_PRaf_PPErk, initial_states, times, interventions = intervention_PRaf_PPErk)
+
+# do(equil(M, X = x))
+do_equil_M_PRaf_PPErk <- mapk_ode_equilM(states = initial_states, rates, TRaf = 100, TMek = 100, TErk = 100, intervention_PRaf_PPErk)()
+
+
+{plot(times, ode_out_meta_model_ai_PRaf_PPErk$PRaf, type='l', col='darkgreen', ylim=c(0, 110), ylab = 'amount')
+lines(ode_out_meta_model_ai_PRaf_PPErk$PPMek, type='l', col='darkblue', ylim=c(0, 110))
+lines(ode_out_meta_model_ai_PRaf_PPErk$PPErk, type='l', col='darkred', ylim=c(0, 110))
+abline(h = do_equil_M_PRaf_PPErk$PRaf, col='darkgreen', lty=2)
+abline(h = do_equil_M_PRaf_PPErk$PPMek, col='darkblue', lty=2)
+abline(h = do_equil_M_PRaf_PPErk$PPErk, col='darkred', lty=2)
+}
+```
+
+
+```{r}
+# intervene on PPMek and PPErk
+# equil(do(M, X=x))
+intervention_PPMek_PPErk <- list(PPMek = 30, PPErk = 40)
+test_ai_PPMek_PPErk <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states, interventions = intervention_PPMek_PPErk)
+
+ode_out_meta_model_ai_PPMek_PPErk <- ode_sim_meta_model(test_ai_PPMek_PPErk, initial_states, times, interventions = intervention_PPMek_PPErk)
+
+# do(equil(M, X = x))
+do_equil_M_PPMek_PPErk <- mapk_ode_equilM(states = initial_states, rates, TRaf = 100, TMek = 100, TErk = 100, intervention_PPMek_PPErk)()
+
+
+{plot(times, ode_out_meta_model_ai_PPMek_PPErk$PRaf, type='l', col='darkgreen', ylim=c(0, 110), ylab = 'amount')
+lines(ode_out_meta_model_ai_PPMek_PPErk$PPMek, type='l', col='darkblue', ylim=c(0, 110))
+lines(ode_out_meta_model_ai_PPMek_PPErk$PPErk, type='l', col='darkred', ylim=c(0, 110))
+abline(h = do_equil_M_PPMek_PPErk$PRaf, col='darkgreen', lty=2)
+abline(h = do_equil_M_PPMek_PPErk$PPMek, col='darkblue', lty=2)
+abline(h = do_equil_M_PPMek_PPErk$PPErk, col='darkred', lty=2)
+}
+```
+
+```{r echo=FALSE}
+# intervene on PRaf, PPMek and PPErk b/c why not
+# equil(do(M, X=x))
+intervention_PRaf_PPMek_PPErk <- list(PRaf = 30, PPMek = 40, PPErk = 50)
+test_ai_PRaf_PPMek_PPErk <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states, interventions = intervention_PRaf_PPMek_PPErk)
+
+ode_out_meta_model_ai_PRaf_PPMek_PPErk <- ode_sim_meta_model(test_ai_PRaf_PPMek_PPErk, initial_states, times, interventions = intervention_PRaf_PPErk)
+
+# do(equil(M, X = x))
+do_equil_M_PRaf_PPMek_PPErk <- mapk_ode_equilM(states = initial_states, rates, TRaf = 100, TMek = 100, TErk = 100, intervention_PRaf_PPMek_PPErk)()
+
+
+{plot(times, ode_out_meta_model_ai_PRaf_PPMek_PPErk$PRaf, type='l', col='darkgreen', ylim=c(0, 110), ylab = 'amount')
+lines(ode_out_meta_model_ai_PRaf_PPMek_PPErk$PPMek, type='l', col='darkblue', ylim=c(0, 110))
+lines(ode_out_meta_model_ai_PRaf_PPMek_PPErk$PPErk, type='l', col='darkred', ylim=c(0, 110))
+abline(h = do_equil_M_PRaf_PPMek_PPErk$PRaf, col='darkgreen', lty=2)
+abline(h = do_equil_M_PRaf_PPMek_PPErk$PPMek, col='darkblue', lty=2)
+abline(h = do_equil_M_PRaf_PPMek_PPErk$PPErk, col='darkred', lty=2)
 }
 ```
