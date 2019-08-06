@@ -1,0 +1,11 @@
+---
+title: "Causal modeling of a dynamic system"
+author: "Sara Taheri"
+date: "8/6/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
