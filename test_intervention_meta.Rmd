@@ -175,8 +175,10 @@ mapk_ode_equilM <- function(states, rates, TRaf, TMek, TErk, interventions = NUL
 }
 
 intervention <- list(PPErk = 30)
-
+# do(equil(M,X=x))
 mapk_ode_equilM(states = initial_states, rates, TRaf = 100, TMek = 100, TErk = 100, intervention)()
+
+# What is equil(do(M,X=x))? I think do(M,X=x) is test_ai. Is it right?
 ```
 # Comparison between steady state and stochastic simulation without intervention
 
