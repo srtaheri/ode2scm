@@ -5,14 +5,11 @@ date: "8/6/2019"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+
 
 ```{R Libraries, echo = FALSE}
 suppressWarnings(suppressMessages(library(gdata)))
 suppressMessages(suppressMessages(library(tibble)))
-suppressMessages(suppressMessages(library(gdata)))
 ```
 
 ## Introduction to the MAPK signaling pathwary
@@ -109,7 +106,6 @@ meta_model <- function(list_of_models, list_of_ds, rates, states, interventions 
     }
   }
   
-  print(innerStates)
   
   transition_function <- function(t, states = innerStates, rates = innerRates, interventions = innerIntervention) {
   # check that list_of_models and list_of_ds are of the same length
@@ -145,7 +141,6 @@ meta_model <- function(list_of_models, list_of_ds, rates, states, interventions 
   attr(transition_function, 'rates') <- as.list(rates)
   attr(transition_function, 'states') <- as.list(states)
   attr(transition_function, 'interventions') <- as.list(interventions)
-  print(innerStates)
   return(transition_function)
 }
 ```
@@ -175,7 +170,6 @@ ode_sim_meta_model <- function(meta_model_object, initial_states, times, interve
     }
   }
   initial_states <- structure(as.numeric(initial_states), names = names(initial_states))
-  print(initial_states)
   rates <- attr(meta_model_object, 'rates')
   rates <- structure(as.numeric(rates), names = names(rates))
   rates <- as.list(rates)
@@ -255,7 +249,7 @@ mapk_ode_equilM <- function(states, rates, TRaf, TMek, TErk, interventions = NUL
         k1 <- t3 * ((u1^2)/(1 + u1 + u1^2))      
       }
   
-      list(k3,k2,k1)
+      list("PRaf" = k3, "PPMek" = k2, "PPErk" = k1)
       
       })
     }
