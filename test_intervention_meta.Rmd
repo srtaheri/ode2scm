@@ -140,9 +140,9 @@ test_bi()
 ode_out_meta_model_bi <- ode_sim_meta_model(test_bi, initial_states, times)
 
 #after intervention
-test_ai <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states, interventions = list(PPMek = 50))
+test_ai <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states, interventions = list(PPMek = 40, PPErk = 30))
 test_ai()
-ode_out_meta_model_ai <- ode_sim_meta_model(test_ai, initial_states, times, interventions = list(PPMek = 50))
+ode_out_meta_model_ai <- ode_sim_meta_model(test_ai, initial_states, times, interventions = list(PPMek = 40, PPErk = 30))
 ```
 
 
@@ -224,12 +224,12 @@ The trajectories (solid lines) represent the evolution of the amounts of MAP3K (
 
 
 ```{r}
-plot(times, ode_out_meta_model_bi$PRaf, type='l', col='darkgreen', ylim=c(0, 110), ylab = 'amount')
+{plot(times, ode_out_meta_model_bi$PRaf, type='l', col='darkgreen', ylim=c(0, 110), ylab = 'amount')
 lines(ode_out_meta_model_bi$PPMek, type='l', col='darkblue', ylim=c(0, 110))
 lines(ode_out_meta_model_bi$PPErk, type='l', col='darkred', ylim=c(0, 110))
 abline(h = Raf, col='darkgreen', lty=2)
 abline(h = Mek, col='darkblue', lty=2)
-abline(h = Erk, col='darkred', lty=2)
+abline(h = Erk, col='darkred', lty=2)}
 ```
 
 
@@ -238,13 +238,14 @@ abline(h = Erk, col='darkred', lty=2)
 ```{r}
 # calculate do(equil(M, X = x))
 
-do_equil_M_PPMek <- mapk_ode_equilM(states = initial_states, rates, TRaf = 100, TMek = 100, TErk = 100, list(list(PPMek = 50)))()
+do_equil_M_PPMek <- mapk_ode_equilM(states = initial_states, rates, TRaf = 100, TMek = 100, TErk = 100, list(PPMek = 40, PPErk = 30))()
 
 
-plot(times, ode_out_meta_model_ai$PRaf, type='l', col='darkgreen', ylim=c(0, 110), ylab = 'amount')
+{plot(times, ode_out_meta_model_ai$PRaf, type='l', col='darkgreen', ylim=c(0, 110), ylab = 'amount')
 lines(ode_out_meta_model_ai$PPMek, type='l', col='darkblue', ylim=c(0, 110))
 lines(ode_out_meta_model_ai$PPErk, type='l', col='darkred', ylim=c(0, 110))
-# abline(h = do_equil_M_PPMek[[1]], col='darkgreen', lty=2)
-# abline(h = do_equil_M_PPMek[[2]], col='darkblue', lty=2)
-# abline(h = do_equil_M_PPMek[[3]], col='darkred', lty=2)
+abline(h = do_equil_M_PPMek[[1]], col='darkgreen', lty=2)
+abline(h = do_equil_M_PPMek[[2]], col='darkblue', lty=2)
+abline(h = do_equil_M_PPMek[[3]], col='darkred', lty=2)
+}
 ```
