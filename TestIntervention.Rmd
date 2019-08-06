@@ -108,7 +108,7 @@ rates <- list(
 initial_states <- list(
   E1 = 1,
   PRaf = 0,
-  PPMek = 20,
+  PPMek = 0,
   PPErk = 0
 )
 
@@ -120,7 +120,7 @@ firstModel()
 # I am not sure there is really a point to making do a function
 # if we're using a deterministic functtion
 secondModel <- mapk_ode_robert2(initial_states, rates,
-                                interventions = list(PPMek = 11, PPErk = 22, PRaf = 33))
+                                interventions = list(PRaf = 50, PPMek = 30))
 secondModel()
 
 #ode_out_intervention <- ode_sim(secondModel, initial_states, times)
