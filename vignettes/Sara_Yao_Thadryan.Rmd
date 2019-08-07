@@ -16,7 +16,7 @@ suppressMessages(suppressMessages(library(tibble)))
 
 The [mitogen-activated protein kinase](https://en.wikipedia.org/wiki/MAPK/ERK_pathway) (MAPK) pathway is important in many biological processes, such as determination of cell fate. It is a cascade of three proteins, a MAPK (aka Erk), a MAPK kinase (MAP2K, aka Mek), and a MAPK kinase kinase (MAP3K, aka Raf), represented with a causal diagram.
 \begin{eqnarray}
-& \text{E1} \rightarrow \text{MAP3K} \rightarrow \text{MAP2K} \rightarrow \text{MAPK} & \label{eq:MAPKdef}
+& \text{E1} \rightarrow \text{Raf} \rightarrow \text{Mek} \rightarrow \text{Erk} & \label{eq:MAPKdef}
 \end{eqnarray}
 Here E1 is an input signal to the pathway. The cascade relays the signal from one protein to the next by changing the count of proteins in an active state.
 
@@ -24,27 +24,39 @@ Here E1 is an input signal to the pathway. The cascade relays the signal from on
 
 A protein molecule is in an active state if it has one or more attached phosphoryl groups. Each arrow in \eqref{eq:MAPKdef} combines the reactions of the phosphorylation (i.e., activation) and dephosphorylation (i.e., desactivation). For example, $\text{E1} \rightarrow \text{MAP3K}$ combines two reactions
 \begin{eqnarray}
-\text{E1} + \text{MAP3K} \overset{v^{\text{act}}_{K3}}{\rightarrow} \text{E1} + \text{P-MAP3K} \ \mbox{and}\
-\text{P-MAP3K} \overset{v^{\text{inh}}_{K3}}{\rightarrow} \text{MAP3K}
+\text{E1} + \text{Raf} \overset{v^{\text{act}}_{K3}}{\rightarrow} \text{E1} + \text{P-Raf} \ \mbox{and}\
+\text{P-Raf} \overset{v^{\text{inh}}_{K3}}{\rightarrow} \text{Raf}
 \end{eqnarray}
 
 In the first reaction above, a particle of the input signal \text{E1} binds (i.e., activates) a molecule of MAP3K to produce MAP3K with an attached phosphoryl. The rate parameter associated with this reaction is $v^{\text{act}}$. In the second reaction, phosphorylated MAP3K loses its phosphoryl (i.e., deactivates), with the rate $v^{\text{inh}}$.  The remaining arrows between MAP3K and MAP2K, and between MAP2K and MAPK aggregate similar reactions and rate pairs.  However, these reactions represent double-phosphorylations, i.e., they require two activation reactions to activate the protein. This results in a more nuanced dynamics.
 
 ## The deterministic mechanistic model
 
-Let $\text{K3}(t)$, $\text{K2}(t)$ and $\text{K}(t)$ denote the counts of fully phosphorylated MAP3K, MAP2K, and MAPK at time $t$. Since MAP2K and MAPK have to be double phosphorylated to be "on" or "active", then $\text{K2}(t)$ and $\text{K}(t)$ represent counts of double phosphorylated proteins. Let $T_{\text{K3}}$, $T_{\text{K2}}$, and $T_{\text{K}}$ represent the total amount of each of the three proteins (unphosphorylated + single-phosphorylation + double-phosphorylation).  Let $E1$ bet the total amount of input signal, which in this model we assume are constant in time.
+Let $\text{K3}(t)$, $\text{K2}(t)$ and $\text{K}(t)$ denote the counts of fully phosphorylated Raf, Mek, and Erk at time $t$. Since Mek and Erk have to be double phosphorylated to be "on" or "active", then $\text{K2}(t)$ and $\text{K}(t)$ represent counts of double phosphorylated proteins. Let $T_{\text{K3}}$, $T_{\text{K2}}$, and $T_{\text{K}}$ represent the total amount of each of the three proteins (unphosphorylated + single-phosphorylation + double-phosphorylation).  Let $E1$ bet the total amount of input signal, which in this model we assume are constant in time.
 
 We model the system as a set of ordinary differential equations $\mathbb{M}$.
 
 $$
 \mathbb{M} =
 \left\{\begin{matrix}
- \frac{\mathrm{d} \text{K3}}{\mathrm{d} t} =&  v^{\text{act}}_{K3}\text{E1}(T_{\text{K3}}-\text{K3}(t)) - v^{\text{inh}}_{K3}\text{K3}(t)\\ 
- \frac{\mathrm{d} \text{K2}}{\mathrm{d} t} =&  \frac{(v^{\text{act}}_{K2})^2}{v^{\text{inh}}_{K2}}\text{K3}(t)^2(T_{\text{K2}} - \text{K2}(t)) - v^{\text{act}}_{K2}\text{K3}(t)\text{K2}(t) - v^{\text{inh}}_{K2}\text{K2}(t)\\ 
- \frac{\mathrm{d} \text{K1}}{\mathrm{d} t} =&  \frac{(v^{\text{act}}_{K1})^2}{v^{\text{inh}}_{K1}}\text{K2}(t)^2(T_{\text{K1}} - \text{K1}(t)) - v^{\text{act}}_{K1}\text{K2}(t)\text{K1}(t) - v^{\text{inh}}_{K1}\text{K1}(t)
+ dPRaf : \frac{\mathrm{d} \text{K3}}{\mathrm{d} t} =&  v^{\text{act}}_{K3}\text{E1}(T_{\text{K3}}-\text{K3}(t)) - v^{\text{inh}}_{K3}\text{K3}(t)\\ 
+ dPPMek: \frac{\mathrm{d} \text{K2}}{\mathrm{d} t} =&  \frac{(v^{\text{act}}_{K2})^2}{v^{\text{inh}}_{K2}}\text{K3}(t)^2(T_{\text{K2}} - \text{K2}(t)) - v^{\text{act}}_{K2}\text{K3}(t)\text{K2}(t) - v^{\text{inh}}_{K2}\text{K2}(t)\\ 
+ dPPErk: \frac{\mathrm{d} \text{K1}}{\mathrm{d} t} =&  \frac{(v^{\text{act}}_{K1})^2}{v^{\text{inh}}_{K1}}\text{K2}(t)^2(T_{\text{K1}} - \text{K1}(t)) - v^{\text{act}}_{K1}\text{K2}(t)\text{K1}(t) - v^{\text{inh}}_{K1}\text{K1}(t)
 \end{matrix}\right.
 $$
 
+## Apply do operator to the model $\mathbb{M}$
+
+We define an ideal intervention in a dynamic model the same as we would with a structural causal model.  It fixes a protein count variable to a constant value that does not change in time.  For example, the perfect intervention do(K2 = k) applied to $\mathbb{M}$ would modify the model as follows:
+
+$$
+\text{do}(\mathbb{M}, K2 := k) = 
+\left\{\begin{matrix}
+ \frac{\mathrm{d} \text{K3}}{\mathrm{d} t} =&  v^{\text{act}}_{K3}\text{E1}(T_{\text{K3}}-\text{K3}(t)) - v^{\text{inh}}_{K3}\text{K3}(t)\\ 
+ \frac{\mathrm{d} \text{K2}}{\mathrm{d} t} =& 0\\ 
+ \frac{\mathrm{d} \text{K1}}{\mathrm{d} t} =&  \frac{(v^{\text{act}}_{K1})^2}{v^{\text{inh}}_{K1}}k^2(T_{\text{K1}} - \text{K1}(t)) - v^{\text{act}}_{K1}k\text{K1}(t) - v^{\text{inh}}_{K1}\text{K1}(t)
+\end{matrix}\right.
+$$
 
 ## Define the MAPK model
 
@@ -83,9 +95,9 @@ rates <- list(
 # so I guess we don't need Raf, Mek, PMek, Erk and PErk values!
 initial_states <- list(
   E1 = 1,
-  PRaf = 0,
-  PPMek = 0,
-  PPErk = 0
+  PRaf = 5,
+  PPMek = 10,
+  PPErk = 8
 )
 
 times <- seq(0, 120, by = .1)
@@ -191,9 +203,10 @@ ode_sim_meta_model <- function(meta_model_object, initial_states, times, interve
 ```{r}
 # simulation on a model without intervention
 ode_out_meta_model_bi <- ode_sim_meta_model(test_bi, initial_states, times)
-
+head(ode_out_meta_model_bi)
 # simulation on a model with intervention
 ode_out_meta_model_ai <- ode_sim_meta_model(test_ai, initial_states, times, interventions = list(PPMek = 40, PPErk = 30))
+head(ode_out_meta_model_ai)
 ```
 
 ## Building a deterministic steady state model
@@ -203,9 +216,9 @@ Let $\text{equil}()$ be an operator that solves and equilbrates the model.  Then
 $$
 \text{equil}(\mathbb{M}) = 
 \left\{\begin{matrix}
- \text{K3}=&  T_{\text{K3}}g_1(\omega_{K3}\text{E1})\\ 
- \text{K2}=&  T_{\text{K2}}g_2(\omega_{K2}\text{K3}) \\ 
- \text{K1}=&  T_{\text{K1}}g_2(\omega_{K1}\text{K2})
+PRaf: \text{K3}=&  T_{\text{K3}}g_1(\omega_{K3}\text{E1})\\ 
+PPMek: \text{K2}=&  T_{\text{K2}}g_2(\omega_{K2}\text{K3}) \\ 
+PPErk: \text{K1}=&  T_{\text{K1}}g_2(\omega_{K1}\text{K2})
 \end{matrix}\right.
 $$
 
@@ -340,7 +353,7 @@ abline(h = do_equil_M_PPMek$PPErk, col='darkred', lty=2)
 
 
 ```{r}
-# intervene on PPErk -> doesn't hold!
+# intervene on PPErk
 # equil(do(M, X=x))
 intervention_PPErk <- list(PPErk = 60)
 test_ai_PPErk <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states, interventions = intervention_PPErk)
@@ -424,13 +437,13 @@ abline(h = do_equil_M_PPMek_PPErk$PPErk, col='darkred', lty=2)
 }
 ```
 
-```{r echo=FALSE}
+```{r }
 # intervene on PRaf, PPMek and PPErk b/c why not
 # equil(do(M, X=x))
 intervention_PRaf_PPMek_PPErk <- list(PRaf = 30, PPMek = 40, PPErk = 50)
 test_ai_PRaf_PPMek_PPErk <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk), c("dE1", "dPRaf", "dPPMek", "dPPErk"), rates, initial_states, interventions = intervention_PRaf_PPMek_PPErk)
 
-ode_out_meta_model_ai_PRaf_PPMek_PPErk <- ode_sim_meta_model(test_ai_PRaf_PPMek_PPErk, initial_states, times, interventions = intervention_PRaf_PPErk)
+ode_out_meta_model_ai_PRaf_PPMek_PPErk <- ode_sim_meta_model(test_ai_PRaf_PPMek_PPErk, initial_states, times, interventions = intervention_PRaf_PPMek_PPErk)
 
 # do(equil(M, X = x))
 do_equil_M_PRaf_PPMek_PPErk <- mapk_ode_equilM(states = initial_states, rates, TRaf = 100, TMek = 100, TErk = 100, intervention_PRaf_PPMek_PPErk)()
