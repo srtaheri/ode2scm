@@ -92,7 +92,6 @@ rates <- list(
   erk_deactivate = 1.0
 )
 
-# so I guess we don't need Raf, Mek, PMek, Erk and PErk values!
 initial_states <- list(
   E1 = 1,
   PRaf = 5,
@@ -171,6 +170,8 @@ test_ai()
 
 
 ## ODE Simulation
+
+`ode_sim_meta_model` is just a wrapper for the `deSolve::ode` function for numerically solving  ordinary differential equation functions (ODE's) in R.
 
 ```{R simulation}
 ode_sim_meta_model <- function(meta_model_object, initial_states, times, interventions = NULL) {
@@ -303,7 +304,9 @@ lines(ode_out_meta_model_bi$PPMek, type='l', col='darkblue', ylim=c(0, 110))
 lines(ode_out_meta_model_bi$PPErk, type='l', col='darkred', ylim=c(0, 110))
 abline(h = Raf, col='darkgreen', lty=2)
 abline(h = Mek, col='darkblue', lty=2)
-abline(h = Erk, col='darkred', lty=2)}
+abline(h = Erk, col='darkred', lty=2)
+legend(1,114, legend = c("PRaf","PPMek","PPErk"), col = c('darkgreen','darkblue','darkred'), lty = 1)
+}
 ```
 
 
@@ -327,6 +330,7 @@ lines(ode_out_meta_model_ai_PRaf$PPErk, type='l', col='darkred', ylim=c(0, 110))
 abline(h = do_equil_M_PRaf$PRaf, col='darkgreen', lty=2)
 abline(h = do_equil_M_PRaf$PPMek, col='darkblue', lty=2)
 abline(h = do_equil_M_PRaf$PPErk, col='darkred', lty=2)
+legend(1,114, legend = c("PRaf","PPMek","PPErk"), col = c('darkgreen','darkblue','darkred'), lty = 1)
 }
 ```
 
@@ -348,6 +352,7 @@ lines(ode_out_meta_model_ai_PPMek$PPErk, type='l', col='darkred', ylim=c(0, 110)
 abline(h = do_equil_M_PPMek$PRaf, col='darkgreen', lty=2)
 abline(h = do_equil_M_PPMek$PPMek, col='darkblue', lty=2)
 abline(h = do_equil_M_PPMek$PPErk, col='darkred', lty=2)
+legend(1,114, legend = c("PRaf","PPMek","PPErk"), col = c('darkgreen','darkblue','darkred'), lty = 1)
 }
 ```
 
@@ -370,6 +375,7 @@ lines(ode_out_meta_model_ai_PPErk$PPErk, type='l', col='darkred', ylim=c(0, 110)
 abline(h = do_equil_M_PPErk$PRaf, col='darkgreen', lty=2)
 abline(h = do_equil_M_PPErk$PPMek, col='darkblue', lty=2)
 abline(h = do_equil_M_PPErk$PPErk, col='darkred', lty=2)
+legend(1,114, legend = c("PRaf","PPMek","PPErk"), col = c('darkgreen','darkblue','darkred'), lty = 1)
 }
 ```
 
@@ -390,6 +396,7 @@ lines(ode_out_meta_model_ai_PRaf_PPMek$PPErk, type='l', col='darkred', ylim=c(0,
 abline(h = do_equil_M_PPMek_PRaf$PRaf, col='darkgreen', lty=2)
 abline(h = do_equil_M_PPMek_PRaf$PPMek, col='darkblue', lty=2)
 abline(h = do_equil_M_PPMek_PRaf$PPErk, col='darkred', lty=2)
+legend(1,114, legend = c("PRaf","PPMek","PPErk"), col = c('darkgreen','darkblue','darkred'), lty = 1)
 }
 ```
 
@@ -412,6 +419,7 @@ lines(ode_out_meta_model_ai_PRaf_PPErk$PPErk, type='l', col='darkred', ylim=c(0,
 abline(h = do_equil_M_PRaf_PPErk$PRaf, col='darkgreen', lty=2)
 abline(h = do_equil_M_PRaf_PPErk$PPMek, col='darkblue', lty=2)
 abline(h = do_equil_M_PRaf_PPErk$PPErk, col='darkred', lty=2)
+legend(1,114, legend = c("PRaf","PPMek","PPErk"), col = c('darkgreen','darkblue','darkred'), lty = 1)
 }
 ```
 
@@ -434,6 +442,7 @@ lines(ode_out_meta_model_ai_PPMek_PPErk$PPErk, type='l', col='darkred', ylim=c(0
 abline(h = do_equil_M_PPMek_PPErk$PRaf, col='darkgreen', lty=2)
 abline(h = do_equil_M_PPMek_PPErk$PPMek, col='darkblue', lty=2)
 abline(h = do_equil_M_PPMek_PPErk$PPErk, col='darkred', lty=2)
+legend(1,114, legend = c("PRaf","PPMek","PPErk"), col = c('darkgreen','darkblue','darkred'), lty = 1)
 }
 ```
 
@@ -455,6 +464,7 @@ lines(ode_out_meta_model_ai_PRaf_PPMek_PPErk$PPErk, type='l', col='darkred', yli
 abline(h = do_equil_M_PRaf_PPMek_PPErk$PRaf, col='darkgreen', lty=2)
 abline(h = do_equil_M_PRaf_PPMek_PPErk$PPMek, col='darkblue', lty=2)
 abline(h = do_equil_M_PRaf_PPMek_PPErk$PPErk, col='darkred', lty=2)
+legend(1,114, legend = c("PRaf","PPMek","PPErk"), col = c('darkgreen','darkblue','darkred'), lty = 1)
 }
 ```
 
