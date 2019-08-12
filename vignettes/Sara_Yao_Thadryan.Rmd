@@ -94,11 +94,17 @@ rates <- list(
   erk_deactivate = 1.0
 )
 
+# initial_states <- list(
+#   E1 = 1,
+#   PRaf = 5,
+#   PPMek = 10,
+#   PPErk = 8
+# )
 initial_states <- list(
   E1 = 1,
-  PRaf = 5,
-  PPMek = 10,
-  PPErk = 8
+  PRaf = 0,
+  PPMek = 0,
+  PPErk = 0
 )
 
 times <- seq(0, 120, by = .1)
@@ -476,10 +482,6 @@ legend(1,114, legend = c("PRaf","PPMek","PPErk"), col = c('darkgreen','darkblue'
 ### do(PRaf = 49.9977)
 
 ```{R do(PRaf = 49.9977)}
-
-
-# intervene on PPMek and PPErk
-# equil(do(M, X=x))
 intervention_experiment_1a <- list(PRaf = 49.9977)
 
 test_ai_experiment1a <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk),
@@ -490,23 +492,8 @@ test_ai_experiment1a <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk),
 out_meta_model_ai_experiment_1a <- ode_sim_meta_model(test_ai_experiment1a,
                                                       initial_states, times,
                                                       interventions = intervention_experiment_1a)
-
-# do(equil(M, X = x))
-do_equil_experiment_1a <- mapk_ode_equilM(states = initial_states, rates,
-                                          TRaf = 100, TMek = 100, TErk = 100,
-                                          intervention_experiment_1a)()
-
-
-
-plot(times, out_meta_model_ai_experiment_1a$PRaf, type = 'l', col = 'darkgreen', ylim = c(0, 110), ylab = 'amount')
-  lines(out_meta_model_ai_experiment_1a$PPMek, type= 'l', col = 'darkblue', ylim = c(0, 110))
-  lines(out_meta_model_ai_experiment_1a$PPErk, type= 'l', col = 'darkred', ylim = c(0, 110))
-  abline(h = do_equil_experiment_1a$PRaf, col = 'darkgreen', lty = 2)
-  abline(h = do_equil_experiment_1a$PPMek, col = 'darkblue', lty = 2)
-  abline(h = do_equil_experiment_1a$PPErk, col = 'darkred', lty = 2)
-  legend(1,114, legend = c("PRaf","PPMek","PPErk"), col = c('darkgreen','darkblue','darkred'), lty = 1)
-
-do_equil_experiment_1a
+out_meta_model_ai_experiment_1a[nrow(out_meta_model_ai_experiment_1a),]
+exp1a_PPErk <- out_meta_model_ai_experiment_1a[nrow(out_meta_model_ai_experiment_1a),"PPErk"]
 ```
 
 
@@ -517,7 +504,112 @@ do_equil_experiment_1a
 ### do(PRaf = 24.9)
 
 ```{R do(PRaf = 24.9)}
+intervention_experiment_2a <- list(PRaf = 24.9)
 
+test_ai_experiment2a <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk),
+                                   c("dE1", "dPRaf", "dPPMek", "dPPErk"),
+                                   rates, initial_states,
+                                   interventions = intervention_experiment_2a)
+
+out_meta_model_ai_experiment_2a <- ode_sim_meta_model(test_ai_experiment2a,
+                                                      initial_states, times,
+                                                      interventions = intervention_experiment_2a)
+out_meta_model_ai_experiment_2a[nrow(out_meta_model_ai_experiment_2a),]
+exp2a_PPErk <- out_meta_model_ai_experiment_2a[nrow(out_meta_model_ai_experiment_2a),"PPErk"]
 
 ```
 
+### Causal effect on PPErk
+
+```{r}
+exp1a_PPErk - exp2a_PPErk
+```
+
+## Experiment 2
+
+### do(PRaf = 40)
+
+```{R do(PRaf = 40)}
+intervention_experiment_2a <- list(PRaf = 40)
+
+test_ai_experiment2a <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk),
+                                   c("dE1", "dPRaf", "dPPMek", "dPPErk"),
+                                   rates, initial_states,
+                                   interventions = intervention_experiment_2a)
+
+out_meta_model_ai_experiment_2a <- ode_sim_meta_model(test_ai_experiment2a,
+                                                      initial_states, times,
+                                                      interventions = intervention_experiment_2a)
+out_meta_model_ai_experiment_2a[nrow(out_meta_model_ai_experiment_2a),]
+exp2a_PPErk <- out_meta_model_ai_experiment_2a[nrow(out_meta_model_ai_experiment_2a),"PPErk"]
+```
+
+
+### do(PRaf = 18.18182)
+
+```{R do(PRaf = 18.18182)}
+intervention_experiment_2b <- list(PRaf = 18.18182)
+
+test_ai_experiment2b <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk),
+                                   c("dE1", "dPRaf", "dPPMek", "dPPErk"),
+                                   rates, initial_states,
+                                   interventions = intervention_experiment_2b)
+
+out_meta_model_ai_experiment_2b <- ode_sim_meta_model(test_ai_experiment2b,
+                                                      initial_states, times,
+                                                      interventions = intervention_experiment_2b)
+out_meta_model_ai_experiment_2b[nrow(out_meta_model_ai_experiment_2b),]
+exp2b_PPErk <- out_meta_model_ai_experiment_2b[nrow(out_meta_model_ai_experiment_2b),"PPErk"]
+
+```
+
+### Causal effect on PPErk
+
+```{r}
+exp2a_PPErk - exp2b_PPErk
+```
+
+
+## Experiment 3
+
+### do(PRaf = 25)
+
+```{R do(PRaf = 25)}
+intervention_experiment_3a <- list(PRaf = 25)
+
+test_ai_experiment3a <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk),
+                                   c("dE1", "dPRaf", "dPPMek", "dPPErk"),
+                                   rates, initial_states,
+                                   interventions = intervention_experiment_3a)
+
+out_meta_model_ai_experiment_3a <- ode_sim_meta_model(test_ai_experiment3a,
+                                                      initial_states, times,
+                                                      interventions = intervention_experiment_3a)
+out_meta_model_ai_experiment_3a[nrow(out_meta_model_ai_experiment_3a),]
+exp3a_PPErk <- out_meta_model_ai_experiment_3a[nrow(out_meta_model_ai_experiment_3a),"PPErk"]
+```
+
+
+### do(PRaf = 9.999999)
+
+```{R do(PRaf = 9.999999)}
+intervention_experiment_3b <- list(PRaf = 9.999999)
+
+test_ai_experiment3b <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk),
+                                   c("dE1", "dPRaf", "dPPMek", "dPPErk"),
+                                   rates, initial_states,
+                                   interventions = intervention_experiment_3b)
+
+out_meta_model_ai_experiment_3b <- ode_sim_meta_model(test_ai_experiment3b,
+                                                      initial_states, times,
+                                                      interventions = intervention_experiment_3b)
+out_meta_model_ai_experiment_3b[nrow(out_meta_model_ai_experiment_3b),]
+exp3b_PPErk <- out_meta_model_ai_experiment_3b[nrow(out_meta_model_ai_experiment_3b),"PPErk"]
+
+```
+
+### Causal effect on PPErk
+
+```{r}
+exp3a_PPErk - exp3b_PPErk
+```
