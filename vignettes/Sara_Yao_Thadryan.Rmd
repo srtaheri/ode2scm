@@ -279,7 +279,7 @@ mapk_ode_equilM(states = initial_states, rates, TRaf = 100, TMek = 100, TErk = 1
 ```
 
 
-## Comparison between steady state and stochastic simulation without intervention
+## Comparison between steady state and ode simulation without intervention
 
 ```{r}
 g1 <- function(a) a / (1 + a )
