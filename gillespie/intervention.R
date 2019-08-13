@@ -17,6 +17,45 @@ sde_sim <- function(transition_function, initial_states, times, interventions = 
   return(out)
 }
 
+gil <- function (N) 
+{
+  S = t(N$Post - N$Pre)
+  v = ncol(S)
+
+  return(function(x0, t0, deltat, ...) {
+    t = t0
+    x = x0
+    print(x) # x is the initial state
+    termt = t0 + deltat
+    repeat {
+      h = N$h(x, t, ...)
+      print('h is...')
+      print(h)
+      h0 = sum(h)
+      print('h0 is...')
+      print(h0)
+      if (h0 < 1e-10) t = 1e+99 else if (h0 > 1e+06) {
+        t = 1e+99
+        warning("Hazard too big - terminating simulation!")
+      } else t = t + rexp(1, h0)
+      print('t is..')
+      print(t)
+      if (t >= termt) return(x)
+      j = sample(v, 1, prob = h)
+      print('j is...')
+      print(j)
+      x = x + S[, j]
+      print('let us see')
+      print(x)
+      print('------')
+
+    }
+    print('done repeating')
+    print('------------------')
+  })
+}
+
+
 mapk_sde <- function(states, rates, interventions = NULL){
   sde <- list()
   
@@ -28,9 +67,9 @@ mapk_sde <- function(states, rates, interventions = NULL){
       0, 0, 0, 0, 1, 0, 0, 0, 0,
       0, 0, 1, 0, 1, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 1, 0, 0, 0,
-      0, 0, 0, 0, 0, 1, 1, 0, 0,
+      0, 0, 0, 0, 0, 0, 1, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 1, 0,
-      0, 0, 0, 0, 0, 1, 0, 1, 0,
+      0, 0, 0, 0, 0, 0, 0, 1, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 1
     ), nrow=10, ncol=9, byrow=T
   )
@@ -43,14 +82,17 @@ mapk_sde <- function(states, rates, interventions = NULL){
       0, 0, 0, 1, 0, 0, 0, 0, 0,
       0, 0, 1, 0, 0, 1, 0, 0, 0,
       0, 0, 0, 0, 1, 0, 0, 0, 0,
-      0, 0, 0, 0, 1, 0, 0, 1, 0,
+      0, 0, 0, 0, 0, 0, 0, 1, 0,
       0, 0, 0, 0, 0, 0, 1, 0, 0,
-      0, 0, 0, 0, 0, 1, 0, 0, 1,
+      0, 0, 0, 0, 0, 0, 0, 0, 1,
       0, 0, 0, 0, 0, 0, 0, 1, 0
     ), nrow=10, ncol=9, byrow=T
   )
   
-  sde$h <- function(states, t, parameters=rates, interventions = NULL){
+  innerIntervention <- interventions
+  
+  sde$h <- function(states, t, parameters=rates, interventions = innerIntervention){
+   #  print(interventions)
     # update the initial states
     if(!is.null(interventions)) {
       for(int in names(interventions)){
@@ -79,20 +121,21 @@ mapk_sde <- function(states, rates, interventions = NULL){
        # (erk_activate ^ 2) * (PPMek ^ 2) * (TErk - PPErk) / erk_deactivate -      erk_activate * PPMek * PPErk -
         #  erk_deactivate * PPErk
       #}
+      
       out <- c(
-        #raf_activate * Raf * E1, #  probability of Raf activating
-        #raf_deactivate * PRaf, # probability of PRaf deactivating
-        mek_activate * PRaf * Mek, # probability of Mek activating to PMek
-        mek_deactivate * PMek, # probability of PMek deactivating to Mek
-        mek_activate * PRaf * PMek, # probability of PMek activating to PPMek
-        mek_deactivate * PPMek, # probability of PPMek deactivating to PMek
-        erk_activate * PPMek * Erk, # probability of Erk activating to PErk
-        erk_deactivate * PErk, # probability of PErk deactivating to PPErk
-        erk_activate * PPMek * PErk, # probability of PErk activating to PPErk
-        erk_deactivate * PPErk # probability of PPErk deactivating to PErk
+        raf_activate * Raf * E1,
+        raf_deactivate * PRaf,
+        0,
+        0,
+        0,
+        0,
+        erk_activate * PPMek * Erk,
+        erk_deactivate * PErk,
+        erk_activate * PPMek * PErk,
+        erk_deactivate * PPErk
       )
-      out[1] <- 0
-      out[2] <- 0   
+      #out[1] <- 0
+      #out[2] <- 0   
       if (!is.null(interventions$Raf) || !is.null(interventions$PRaf)) {
         print('intervene on raf')
         out[1] <- 0
@@ -132,17 +175,17 @@ rates <- list(
   erk_deactivate=1.0
 )
 
-initial_states <-  list(E1=1, Raf=100, PRaf=0, Mek=100, PMek=0, PPMek=0, Erk=100, PErk=0, PPErk=0)
+initial_states <-  list(E1=1, Raf=100, PRaf=0, Mek=50, PMek=20, PPMek=30, Erk=100, PErk=0, PPErk=0)
 
 intervention_raf <- list(Raf = 70, PRaf = 30)
 intervention_mek <- list(Mek=50, PMek=20, PPMek=30)
 
-times <- seq(0, 30, by = .1)
+times <- seq(0, 0.5, by = .1)
 faster_rates <- lapply(rates, `*`, 20) # WTF
-stoc_transition_func <- mapk_sde(initial_states, faster_rates, 
-                                 intervention_raf)
-sde_out <- sde_sim(stoc_transition_func, initial_states, times, 
-                   intervention_raf)
+stoc_transition_func <- mapk_sde(initial_states, faster_rates
+                                 )
+sde_out <- sde_sim(stoc_transition_func, initial_states, times
+                   )
 
 sde_out[nrow(sde_out),]$Raf
 sde_out[nrow(sde_out),]$PRaf
