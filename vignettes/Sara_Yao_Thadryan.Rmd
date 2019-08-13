@@ -10,6 +10,7 @@ output: html_document
 ```{R Libraries, echo = FALSE}
 suppressWarnings(suppressMessages(library(gdata)))
 suppressMessages(suppressMessages(library(tibble)))
+#suppressMessages(suppressMessages(library(ode2scm)))
 ```
 
 It is standard to use mathematic models of how the behavior of a system evolves in time (e.g., ordinary differential equations) to model dynamic systems.  However, modelers are often interested in how an intervention causes a system to behave at equilibrium -- where the system dynamics have stabilized.  For example, in economics, there are differential equations that define the rate of change of price given supply and demand.  However, an economist is generally interested predicting the effect of an intervention on supply (e.g., through a tariff) will affect the price of a product at equilibrium, they are less concerned with predicting exactly how the intervention will cause the price to fluctuate before reaching equilibrium.
@@ -614,26 +615,15 @@ exp3b_PPErk <- out_meta_model_ai_experiment_3b[nrow(out_meta_model_ai_experiment
 exp3a_PPErk - exp3b_PPErk
 ```
 
+### A similar model for stochastic simulation
+
+The stochastic simulation uses the [Gillespie algorithm](https://en.wikipedia.org/wiki/Gillespie_algorithm) to simulate from the MAPK biochemical reaction.  The intuition is this, in both cases each reaction has a rate dependent on the amount of the reaction substrates at a given time point and the reaction rate parameters.  An ODE model treats that rate as determining a continuous change in time.  A stochastic model uses the rate to calculate the probability that a reaction will occur in any given instant.  So the occurance of a reaction is a discrete event, thus the trajectories make small random jumps. To learn more about this, [here](https://d1b10bmlvqabco.cloudfront.net/attach/jv2j4bw56an62b/hjrof4swrey3fd/jz3da8jk1uw7/lecture6.pdf) are some lovely slides.  
+
+## Modify the SDE simulation function by adding intervention as the input
 
 ```{r stochastic}
-library(ode2scm)
-
-sde_sim <- function(transition_function, initial_states, times, interventions = NULL) {
-  if(!is.null(interventions)) {
-    for(int in names(interventions)){
-      initial_states[[int]] <- interventions[[int]]
-    }
-  }
-  print(initial_states)
-  initial_states <- structure(as.numeric(initial_states), names = names(initial_states))
-  t_delta <- times[2] - times[1]
-  out <- as_tibble(
-    smfsb::simTs(initial_states, times[1], times[length(times)], t_delta, transition_function)
-  )
-  out$time <- times
-  out <- out[, c('time', setdiff(names(out), 'time'))]
-  return(out)
-}
+# initial states are different now because we add Raf, Mek, PMek, Erk and PErk as well
+initial_states <-  list(E1=1, Raf=100, PRaf=0, Mek=100, PMek=0, PPMek=0, Erk=100, PErk=0, PPErk=0)
 
 
 mapk_sde <- function(states, rates, interventions = NULL){
@@ -679,7 +669,6 @@ mapk_sde <- function(states, rates, interventions = NULL){
         states[[int]] <- interventions[[int]]
       }
     }
-    print(states)
     with(as.list(c(states, parameters, interventions)), {
       if(!is.null(interventions)) {
         for(int in names(interventions)){
@@ -706,35 +695,60 @@ mapk_sde <- function(states, rates, interventions = NULL){
   transition_function <- StepGillespie(sde)
   return(transition_function)
 }
-
-rates <- list(
-  raf_activate=0.1,
-  raf_deactivate=0.1,
-  mek_activate=0.1,
-  mek_deactivate=2.0,
-  erk_activate=0.1,
-  erk_deactivate=1.0
-)
-
-initial_states <-  list(E1=1, Raf=100, PRaf=0, Mek=100, PMek=0, PPMek=0, Erk=100, PErk=0, PPErk=0)
-
-intervention_raf <- list(Raf = 70, PRaf = 30)
-intervention_mek <- list(Mek=50, PMek=20, PPMek=30)
-intervention_mek_raf <- list(Raf = 70, PRaf = 30,Mek=50, PMek=20, PPMek=30)
-
-times <- seq(0, 0.5, by = .1)
-faster_rates <- lapply(rates, `*`, 20) # WTF
-stoc_transition_func <- mapk_sde(initial_states, faster_rates,intervention_mek_raf
-                                 )
-sde_out <- sde_sim(stoc_transition_func, initial_states, times,intervention_mek_raf
-                   )
-
-sde_out[nrow(sde_out),]$Raf
-sde_out[nrow(sde_out),]$PRaf
-sde_out[nrow(sde_out),]$Mek
-sde_out[nrow(sde_out),]$PMek
-sde_out[nrow(sde_out),]$PPMek
-sde_out[nrow(sde_out),]$Erk
-sde_out[nrow(sde_out),]$PErk
-sde_out[nrow(sde_out),]$PPErk
 ```
+
+
+### Modify sde_sim function by adding intervention as the input 
+
+```{r}
+sde_sim <- function(transition_function, initial_states, times, interventions = NULL) {
+  if(!is.null(interventions)) {
+    for(int in names(interventions)){
+      initial_states[[int]] <- interventions[[int]]
+    }
+  }
+  initial_states <- structure(as.numeric(initial_states), names = names(initial_states))
+  t_delta <- times[2] - times[1]
+  out <- as_tibble(
+    smfsb::simTs(initial_states, times[1], times[length(times)], t_delta, transition_function)
+  )
+  out$time <- times
+  out <- out[, c('time', setdiff(names(out), 'time'))]
+  return(out)
+}
+```
+
+
+### Intervene on Raf
+```{r}
+times <- seq(0, 0.5, by = .1)
+intervention_raf <- list(Raf = 70, PRaf = 30)
+faster_rates <- lapply(rates, `*`, 20)
+stoc_transition_func <- mapk_sde(initial_states, faster_rates,intervention_raf)
+sde_out <- sde_sim(stoc_transition_func, initial_states, times,intervention_raf)
+sde_out[nrow(sde_out),]
+
+```
+
+### Intervene on Mek
+```{r}
+times <- seq(0, 0.5, by = .1)
+intervention_mek <- list(Mek=50, PMek=20, PPMek=30)
+faster_rates <- lapply(rates, `*`, 20)
+stoc_transition_func <- mapk_sde(initial_states, faster_rates,intervention_mek)
+sde_out <- sde_sim(stoc_transition_func, initial_states, times,intervention_mek)
+sde_out[nrow(sde_out),]
+
+```
+
+### Intervene on Raf and Mek
+```{r}
+times <- seq(0, 0.5, by = .1)
+intervention_mek_raf <- list(Raf = 70, PRaf = 30,Mek=50, PMek=20, PPMek=30)
+faster_rates <- lapply(rates, `*`, 20)
+stoc_transition_func <- mapk_sde(initial_states, faster_rates,intervention_mek_raf)
+sde_out <- sde_sim(stoc_transition_func, initial_states, times,intervention_mek_raf)
+sde_out[nrow(sde_out),]
+
+```
+
