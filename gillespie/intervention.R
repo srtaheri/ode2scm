@@ -1,3 +1,5 @@
+library(ode2scm)
+
 sde_sim <- function(transition_function, initial_states, times, interventions = NULL) {
   if(!is.null(interventions)) {
     for(int in names(interventions)){
@@ -59,9 +61,27 @@ mapk_sde <- function(states, rates, interventions = NULL){
     with(as.list(c(states, parameters, interventions)), {
       # if intervene on PRaf, then both Raf and PRaf are fixed?
       # intervene on PPMek, then PMek and PPMek are fixed?
+      
+      #dE1 <- function(...) {
+       # 0
+      #}
+      
+      #dPRaf <- function(raf_activate, PRaf, E1, raf_deactivate, TRaf = 100, ...) {
+       # raf_activate * (TRaf-PRaf) * E1 - raf_deactivate * PRaf
+      #}
+      
+      #dPPMek <- function(mek_activate, mek_deactivate, PRaf, PPMek, TMek = 100, ...) {
+       # (mek_activate ^ 2) * (PRaf ^ 2) * (TMek - PPMek) / mek_deactivate -       mek_activate * PRaf * PPMek -
+        #  mek_deactivate * PPMek
+      #}
+      
+      #dPPErk <- function(erk_activate, erk_deactivate, PPMek, PPErk, TErk = 100, ...) {
+       # (erk_activate ^ 2) * (PPMek ^ 2) * (TErk - PPErk) / erk_deactivate -      erk_activate * PPMek * PPErk -
+        #  erk_deactivate * PPErk
+      #}
       out <- c(
-        raf_activate * Raf * E1, #  probability of Raf activating
-        raf_deactivate * PRaf, # probability of PRaf deactivating
+        #raf_activate * Raf * E1, #  probability of Raf activating
+        #raf_deactivate * PRaf, # probability of PRaf deactivating
         mek_activate * PRaf * Mek, # probability of Mek activating to PMek
         mek_deactivate * PMek, # probability of PMek deactivating to Mek
         mek_activate * PRaf * PMek, # probability of PMek activating to PPMek
@@ -71,10 +91,8 @@ mapk_sde <- function(states, rates, interventions = NULL){
         erk_activate * PPMek * PErk, # probability of PErk activating to PPErk
         erk_deactivate * PPErk # probability of PPErk deactivating to PErk
       )
-      out[3] <- 0
-      out[4] <- 0
-      out[5] <- 0
-      out[6] <- 0
+      out[1] <- 0
+      out[2] <- 0   
       if (!is.null(interventions$Raf) || !is.null(interventions$PRaf)) {
         print('intervene on raf')
         out[1] <- 0
@@ -121,8 +139,10 @@ intervention_mek <- list(Mek=50, PMek=20, PPMek=30)
 
 times <- seq(0, 30, by = .1)
 faster_rates <- lapply(rates, `*`, 20) # WTF
-stoc_transition_func <- mapk_sde(initial_states, faster_rates, intervention_mek)
-sde_out <- sde_sim(stoc_transition_func, initial_states, times, intervention_mek)
+stoc_transition_func <- mapk_sde(initial_states, faster_rates, 
+                                 intervention_raf)
+sde_out <- sde_sim(stoc_transition_func, initial_states, times, 
+                   intervention_raf)
 
 sde_out[nrow(sde_out),]$Raf
 sde_out[nrow(sde_out),]$PRaf
