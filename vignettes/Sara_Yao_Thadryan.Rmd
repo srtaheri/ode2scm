@@ -483,6 +483,15 @@ legend(1,114, legend = c("PRaf","PPMek","PPErk"), col = c('darkgreen','darkblue'
 ### do(PRaf = 49.9977)
 
 ```{R do(PRaf = 49.9977)}
+rates <- list(
+  raf_activate = 0.1,
+  raf_deactivate = 0.1,
+  mek_activate = 0.1,
+  mek_deactivate = 2.0,
+  erk_activate = 0.1,
+  erk_deactivate = 1.0
+)
+
 intervention_experiment_1a <- list(PRaf = 49.9977)
 
 test_ai_experiment1a <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk),
@@ -531,6 +540,16 @@ exp1a_PPErk - exp2a_PPErk
 ### do(PRaf = 40)
 
 ```{R do(PRaf = 40)}
+
+rates <- list(
+  raf_activate = 0.2,
+  raf_deactivate = 0.3,
+  mek_activate = 0.2,
+  mek_deactivate = 3.0,
+  erk_activate = 0.2,
+  erk_deactivate = 1.5
+)
+
 intervention_experiment_2a <- list(PRaf = 40)
 
 test_ai_experiment2a <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk),
@@ -576,6 +595,15 @@ exp2a_PPErk - exp2b_PPErk
 ### do(PRaf = 25)
 
 ```{R do(PRaf = 25)}
+rates <- list(
+  raf_activate = 0.1,
+  raf_deactivate = 0.3,
+  mek_activate = 0.5,
+  mek_deactivate = 5.0,
+  erk_activate = 0.3,
+  erk_deactivate = 4.0
+)
+
 intervention_experiment_3a <- list(PRaf = 25)
 
 test_ai_experiment3a <- meta_model(c(dE1, dPRaf, dPPMek, dPPErk),
