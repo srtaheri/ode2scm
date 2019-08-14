@@ -6,7 +6,7 @@ sde_sim <- function(transition_function, initial_states, times, interventions = 
       initial_states[[int]] <- interventions[[int]]
     }
   }
-  print(initial_states)
+  #print(initial_states)
   initial_states <- structure(as.numeric(initial_states), names = names(initial_states))
   t_delta <- times[2] - times[1]
   out <- as_tibble(
@@ -61,7 +61,7 @@ mapk_sde <- function(states, rates, interventions = NULL){
         states[[int]] <- interventions[[int]]
       }
     }
-    print(states)
+    #print(states)
     with(as.list(c(states, parameters, interventions)), {
       if(!is.null(interventions)) {
         for(int in names(interventions)){
@@ -81,6 +81,7 @@ mapk_sde <- function(states, rates, interventions = NULL){
         erk_activate * PPMek * PErk,
         erk_deactivate * PPErk
       )
+      print(out)
 
       return(out)
     })

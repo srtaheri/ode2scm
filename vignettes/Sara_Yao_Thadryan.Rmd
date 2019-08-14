@@ -10,7 +10,7 @@ output: html_document
 ```{R Libraries, echo = FALSE}
 suppressWarnings(suppressMessages(library(gdata)))
 suppressMessages(suppressMessages(library(tibble)))
-#suppressMessages(suppressMessages(library(ode2scm)))
+suppressMessages(suppressMessages(library(ode2scm)))
 ```
 
 It is standard to use mathematic models of how the behavior of a system evolves in time (e.g., ordinary differential equations) to model dynamic systems.  However, modelers are often interested in how an intervention causes a system to behave at equilibrium -- where the system dynamics have stabilized.  For example, in economics, there are differential equations that define the rate of change of price given supply and demand.  However, an economist is generally interested predicting the effect of an intervention on supply (e.g., through a tariff) will affect the price of a product at equilibrium, they are less concerned with predicting exactly how the intervention will cause the price to fluctuate before reaching equilibrium.
@@ -625,7 +625,6 @@ The stochastic simulation uses the [Gillespie algorithm](https://en.wikipedia.or
 # initial states are different now because we add Raf, Mek, PMek, Erk and PErk as well
 initial_states <-  list(E1=1, Raf=100, PRaf=0, Mek=100, PMek=0, PPMek=0, Erk=100, PErk=0, PPErk=0)
 
-
 mapk_sde <- function(states, rates, interventions = NULL){
   sde <- list()
   
@@ -662,7 +661,6 @@ mapk_sde <- function(states, rates, interventions = NULL){
   innerIntervention <- interventions
   
   sde$h <- function(states, t, parameters=rates, interventions = innerIntervention){
-   #  print(interventions)
     # update the initial states
     if(!is.null(interventions)) {
       for(int in names(interventions)){
@@ -676,19 +674,30 @@ mapk_sde <- function(states, rates, interventions = NULL){
           sde$Post[,int] <- 0
         }
       }
-      out <- c(
-        raf_activate * Raf * E1,
-        raf_deactivate * PRaf,
-        mek_activate * PRaf * Mek,
-        mek_deactivate * PMek,
-        mek_activate * PRaf * PMek,
-        mek_deactivate * PPMek,
-        erk_activate * PPMek * Erk,
-        erk_deactivate * PErk,
-        erk_activate * PPMek * PErk,
-        erk_deactivate * PPErk
-      )
-
+    
+    out <- c(
+      raf_activate * Raf * E1,
+      raf_deactivate * PRaf,
+      mek_activate * PRaf * Mek,
+      mek_deactivate * PMek,
+      mek_activate * PRaf * PMek,
+      mek_deactivate * PPMek,
+      erk_activate * PPMek * Erk,
+      erk_deactivate * PErk,
+      erk_activate * PPMek * PErk,
+      erk_deactivate * PPErk
+    )
+    
+    names(out) <- c("RafToPRaf","PRafToRaf",
+                    "MekToPMek","PMekToMek","PMekToPPMek","PPMekToPMek",
+                    "ErkToPErk","PErkToErk","PErkToPPErk","PPErkToPErk")
+    if(!is.null(interventions)) {
+      for(int in names(interventions)){
+        out[which(grepl(int, names(out), ignore.case = TRUE) == TRUE)] <- 0
+      }
+    }
+      out <- unname(out)
+      
       return(out)
     })
   }
@@ -716,6 +725,9 @@ sde_sim <- function(transition_function, initial_states, times, interventions = 
   out <- out[, c('time', setdiff(names(out), 'time'))]
   return(out)
 }
+# transition_function <- stoc_transition_func
+# interventions <- intervention_raf
+# sde_out <- sde_sim(stoc_transition_func, initial_states, times,intervention_raf)
 ```
 
 
@@ -737,6 +749,17 @@ intervention_mek <- list(Mek=50, PMek=20, PPMek=30)
 faster_rates <- lapply(rates, `*`, 20)
 stoc_transition_func <- mapk_sde(initial_states, faster_rates,intervention_mek)
 sde_out <- sde_sim(stoc_transition_func, initial_states, times,intervention_mek)
+sde_out[nrow(sde_out),]
+
+```
+
+### Intervene on Erk
+```{r}
+times <- seq(0, 0.5, by = .1)
+intervention_erk <- list(Erk=50, PErk=20, PPErk=30)
+faster_rates <- lapply(rates, `*`, 20)
+stoc_transition_func <- mapk_sde(initial_states, faster_rates,intervention_erk)
+sde_out <- sde_sim(stoc_transition_func, initial_states, times,intervention_erk)
 sde_out[nrow(sde_out),]
 
 ```
