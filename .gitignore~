@@ -7,4 +7,6 @@ inst/doc
 revdep/checks
 revdep/library
 inst/python/__pycache__
-.DS_store
+.DS_Store
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
